@@ -1,0 +1,11 @@
+datasets
+evaluate
+openai
+numpy
+python-dotenv
+datasets
+scikit-learn
+xgboost
+lightgbm
+catboost
+langchain
