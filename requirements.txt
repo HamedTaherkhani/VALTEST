@@ -9,3 +9,7 @@ xgboost
 lightgbm
 catboost
 langchain
+transformers
+torch
+bitsandbytes
+accelerate

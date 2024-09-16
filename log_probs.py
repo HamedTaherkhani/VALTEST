@@ -3,6 +3,7 @@ import numpy as np
 from function_executor import run_testcase, TimeoutException
 import numpy as np
 from tqdm import tqdm
+import re
 from generate_testcases import RawLogProbs
 
 class LogProb:
@@ -22,11 +23,13 @@ class LogProb:
 
 
 class TestCase:
-    def __init__(self, text, input_logprobs: List[LogProb], output_logprobs: List[LogProb] = None,
-                 is_valid: bool = None):
+    def __init__(self, text, input_logprobs: List[LogProb], output_logprobs: List[LogProb],
+                 second_output_logprobs, second_input_logprobs, is_valid: int = None):
         self.text = text
         self.input_logprobs = input_logprobs
         self.output_logprobs = output_logprobs
+        self.second_input_logprobs = second_input_logprobs
+        self.second_output_logprobs = second_output_logprobs
         self.is_valid = is_valid
 
     def __str__(self):
@@ -61,8 +64,8 @@ class Function:
     def __repr__(self):
         return self.__str__()
 
-def getter(res):
-    for lp in res.choices[0].logprobs.content:
+def getter(logprobs):
+    for lp in logprobs:
         yield lp
 
 
@@ -74,33 +77,55 @@ def getter(res):
 #         for t in testcase:
 #             if t == lp.token:
 
+def validate_string(input_string):
+    # List of unacceptable tokens
+    unacceptable_tokens = ('==', ' ', '  ', ',', '[', ']', '\'', '\"' ,')', '(', "\"")
 
-def get_logprobs(response, testcases, method_name, ground_truth) -> List[TestCase]:
-    unacceptable_tokens = (' ==', '==', ' == ', ' ', '  ', ' ,', ',')
-    gen = getter(response)
+    # Create a pattern to match the unacceptable tokens
+    pattern = '|'.join(re.escape(token) for token in unacceptable_tokens)
+
+    # Find all occurrences of the unacceptable tokens in the string
+    matches = re.findall(pattern, input_string)
+
+    # Reconstruct the validated part of the string using the unacceptable tokens
+    validated_string = ''.join(matches)
+
+    # Check if the input string contains only the unacceptable tokens
+    if validated_string == input_string:
+        return False
+    else:
+        return True
+
+def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCase]:
+    # unacceptable_tokens = (' ==', '==', ' == ', ' ', '  ', ' ,', ',', ' [', '[', ']' , ' ]', '\'',' \'', '\"', ' \"')
+    gen = getter(logprobs)
     all_tests: List[TestCase] = []
     textcase_index = 0
     for logprob in gen:
-        if logprob.token == 'assert':
+        if 'assert' in logprob[0]:
             for logprob2 in gen:
                 is_break = False
-                if '(' in logprob2.token:
+                if '(' in logprob2[0]:
                     input_logprobs: List[LogProb] = []
                     output_logprobs: List[LogProb] = []
+                    second_input_logprobs: List[LogProb] = []
+                    second_output_logprobs: List[LogProb] = []
                     for logprob3 in gen:
                         # print(logprob3.token)
-                        if ')' in logprob3.token:
+                        if '==' in logprob3[0]:
                             for logprob4 in gen:
-                                if logprob4.token in unacceptable_tokens:
+                                if not validate_string(logprob4[0]):
                                     continue
-                                elif '#' in logprob4.token or '\n' in logprob4.token:  # comment here
+                                elif '#' in logprob4[0] or '\n' in logprob4[0]:  # comment here
                                     break
-                                output_logprobs.append(LogProb(type=2, token=logprob4.token,
-                                                               prob=np.round(np.exp(logprob4.logprob) * 100, 2)))
+                                output_logprobs.append(LogProb(type=2, token=logprob4[0],
+                                                               prob=np.round(np.exp(logprob4[1]) * 100, 2)))
+
+                                second_output_logprobs.append(LogProb(type=2,token=logprob4[2][0][0], prob=np.round(np.exp(logprob4[2][0][1]) * 100, 2)))
                             try:
                                 is_passed = run_testcase(ground_truth + '\n' + testcases[textcase_index] , 5)
                                 testcase = TestCase(text=testcases[textcase_index], input_logprobs=input_logprobs,
-                                                    output_logprobs=output_logprobs, is_valid=is_passed)
+                                                    output_logprobs=output_logprobs, is_valid=is_passed, second_input_logprobs=second_input_logprobs, second_output_logprobs=second_output_logprobs)
                                 # print(testcase)
                                 # print('******************************************************')
                                 all_tests.append(testcase)
@@ -111,35 +136,40 @@ def get_logprobs(response, testcases, method_name, ground_truth) -> List[TestCas
                                 textcase_index += 1
                                 is_break = True
                                 break
-                        elif logprob3.token == ',':
+                        elif logprob3[0] == ',':
                             pass
                         else:
                             # print(logprob2.token)
-                            lp = LogProb(type=1, token=logprob3.token, prob=np.round(np.exp(logprob3.logprob) * 100, 2))
-                            input_logprobs.append(lp)
+                            if validate_string(logprob3[0]):
+                                lp = LogProb(type=1, token=logprob3[0], prob=np.round(np.exp(logprob3[1]) * 100, 2))
+                                second_lp = LogProb(type=1, token=logprob3[2][0][0], prob=np.round(np.exp(logprob3[2][0][1]) * 100, 2))
+                                input_logprobs.append(lp)
+                                second_input_logprobs.append(second_lp)
                 if is_break:
                     break
     return all_tests
 
 
-def get_all_tests(llm:str):
+def get_all_tests(dataset:str, llm:str):
     import pickle
-    file_name = f'raw_logprobs/{llm}.plk'
+    file_name = f'raw_logprobs/{dataset}_{llm}.pkl'
     try:
         with open(file_name, 'rb') as f:
             raw_probs: List[RawLogProbs] = pickle.load(f)
     except FileNotFoundError:
         print(f'file {file_name} not found')
         raise FileNotFoundError
+    if dataset == 'HumanEval':
+        raw_probs = [r for idx,r in enumerate(raw_probs) if idx!=39]
     functions: List[Function] = []
-    # print(raw_probs)
     for prob in tqdm(raw_probs):
         # print(prob.API_Response.choices[0].message.content)
         # print(prob.solution + prob.testcases[0])
         try:
-            testcases: List[TestCase] = get_logprobs(prob.API_Response, prob.testcases, prob.prompt, prob.solution)
+            testcases: List[TestCase] = get_logprobs(prob.logprobs, prob.testcases, prob.prompt, prob.solution)
         except Exception as e:
             # raise e
+            print(e)
             print('here')
             continue
         # for a in prob.API_Response.choices[0].logprobs.content:
@@ -149,4 +179,5 @@ def get_all_tests(llm:str):
         # print('----------------------------------------------')
         f = Function(prompt=prob.prompt, testcases=testcases, solution=prob.solution)
         functions.append(f)
+        print(f)
     return functions

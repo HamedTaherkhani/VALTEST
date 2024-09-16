@@ -19,7 +19,8 @@ from sklearn.utils import resample
 from xgboost import XGBClassifier  # For XGBoost
 from lightgbm import LGBMClassifier  # For LightGBM
 from log_probs import LogProb, TestCase, get_all_tests, RawLogProbs
-
+from datasets_and_llms import VALID_DATASETS, VALID_LLMS
+from sklearn.model_selection import GroupKFold, KFold
 # from catboost import CatBoostClassifier
 class FeatureExtractionStrategy:
     def extract_features(self, log_probs: List[LogProb]) -> dict:
@@ -71,9 +72,9 @@ class ModelFactory:
 
 
 # Function to extract features from TestCases
-def extract_features(test_cases: List[TestCase], strategy: FeatureExtractionStrategy) -> List[dict]:
+def extract_features(test_cases: List[TestCase], function_ids: List[int], strategy: FeatureExtractionStrategy) -> List[dict]:
     features = []
-    for test_case in test_cases:
+    for test_case, func_id in zip(test_cases, function_ids):
         # Extract input features and add a prefix to each key
         input_features = {f'input_{k}': v for k, v in strategy.extract_features(test_case.input_logprobs).items()}
 
@@ -81,8 +82,11 @@ def extract_features(test_cases: List[TestCase], strategy: FeatureExtractionStra
         output_features = {f'output_{k}': v for k, v in strategy.extract_features(
             test_case.output_logprobs).items()}
 
-        # Combine input and output features with is_valid flag
-        combined_features = {**input_features, **output_features, 'is_valid': test_case.is_valid}
+        second_input_features = {f'second_input_{k}': v for k, v in strategy.extract_features(test_case.second_input_logprobs).items()}
+        second_output_features = {f'second_output_{k}': v for k, v in strategy.extract_features(
+            test_case.second_output_logprobs).items()}
+        # Combine input and output features with is_valid flag and function_id
+        combined_features = {**input_features, **output_features, **second_output_features, **second_input_features, 'is_valid': test_case.is_valid, 'function_id': func_id}
         features.append(combined_features)
 
     return features
@@ -92,35 +96,57 @@ def extract_features(test_cases: List[TestCase], strategy: FeatureExtractionStra
 def prepare_data(features: List[dict]):
     # Convert list of dicts to a DataFrame
     df = pd.DataFrame(features)
-    X = df.drop(columns=['is_valid'])
+    X = df.drop(columns=['is_valid', 'function_id'])
     y = df['is_valid']
-    return X, y
+    groups = df['function_id']  # Extract groups based on function IDs
+    return X, y, groups
+
 
 
 # Function to train and evaluate models
-def train_and_evaluate(X, y, model_name: str):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-
+def train_and_evaluate(X, y, groups, model_name: str):
     # Scaling and model pipeline
     pipeline = Pipeline([
         ('scaler', StandardScaler()),
         ('classifier', ModelFactory.get_model(model_name))
     ])
 
-    pipeline.fit(X_train, y_train)
-    y_pred = pipeline.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
+    # Set up GroupKFold cross-validation
+    group_kfold = GroupKFold(n_splits=5)
+    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+    fold = 1
+    accuracies = []
+
+    for train_index, test_index in group_kfold.split(X, y, groups=groups):
+    # for train_index, test_index in kf.split(X, y):
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+        pipeline.fit(X_train, y_train)
+        y_pred = pipeline.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        accuracies.append(accuracy)
+
+        # print(f"Fold {fold} - Accuracy: {accuracy:.2f}")
+        # print(classification_report(y_test, y_pred))
+        fold += 1
 
     print(f"Model: {model_name}")
-    print(f"Accuracy: {accuracy:.2f}")
-    print(classification_report(y_test, y_pred))
-    return accuracy
+    print(f"Cross-validated accuracies: {accuracies}")
+    print(f"Mean accuracy: {np.mean(accuracies):.2f}")
+    return np.mean(accuracies)
 
 
-def balance_data(X, y):
-    df = pd.concat([X, y], axis=1)
-    valid_cases = df[df['is_valid'] == True]
-    invalid_cases = df[df['is_valid'] == False]
+def balance_data(X, y, groups):
+    # Combine X, y, and groups into a single DataFrame
+    df = X.copy()
+    df['is_valid'] = y
+    df['function_id'] = groups
+
+    # Separate the classes
+    valid_cases = df[df['is_valid'] == 1]
+    invalid_cases = df[df['is_valid'] == 0]
+
     # Determine the smaller class size
     min_size = min(len(valid_cases), len(invalid_cases))
 
@@ -134,35 +160,45 @@ def balance_data(X, y):
     # Shuffle the data to avoid ordering bias
     balanced_df = balanced_df.sample(frac=1, random_state=42).reset_index(drop=True)
 
-    # Split the balanced data back into features and target
-    X_balanced = balanced_df.drop(columns=['is_valid'])
+    # Split the balanced data back into features, target, and groups
+    X_balanced = balanced_df.drop(columns=['is_valid', 'function_id'])
     y_balanced = balanced_df['is_valid']
+    groups_balanced = balanced_df['function_id']
 
-    return X_balanced, y_balanced
+    return X_balanced, y_balanced, groups_balanced
 
 
 # Main function tying everything together
-def main(dataset:str, llm:str):
+def main(dataset: str, llm: str):
     # Extract features
-    functions = get_all_tests(dataset)
+    print('Extracting testcases and running them...')
+    functions = get_all_tests(dataset, llm)
     all_testcases = []
-    for f in functions:
-        all_testcases.extend(f.testcases)
+    function_ids = []  # New list to store function IDs
+    for i, f in enumerate(functions):
+        for test_case in f.testcases:
+            all_testcases.append(test_case)
+            function_ids.append(i)  # Assign function ID to each test case
+        # print(f)
+        # print('---------------------------------------------------')
     strategy = StatisticalFeatureExtraction()
 
-    features = extract_features(all_testcases, strategy)
-    print(features[0])
-
-    # print(all_testcases)
+    features = extract_features(all_testcases, function_ids, strategy)  # Pass function_ids
+    if features:
+        print("Sample feature:", features[0])
+    else:
+        print("No features extracted.")
 
     # Prepare data
-    X, y = prepare_data(features)
-    X_balanced, y_balanced = balance_data(X, y)
+    X, y, groups = prepare_data(features)  # Now returns groups
+    print(f"Original dataset size - Number of valid testcases: {y.sum()}, Number of invalid testcases: {len(y) - y.sum()}")
 
-    true_count = y_balanced.sum()
-    false_count = len(y_balanced) - true_count
-    print(f"Number of rows where is_valid is True: {true_count}")
-    print(f"Number of rows where is_valid is False: {false_count}")
+    # Balance the data
+    X_balanced, y_balanced, groups_balanced = balance_data(X, y, groups)
+    true_count_balanced = y_balanced.sum()
+    false_count_balanced = len(y_balanced) - true_count_balanced
+    print(f"Balanced dataset size - Number of valid testcases: {true_count_balanced}")
+    print(f"Balanced dataset size - Number of invalid testcases: {false_count_balanced}")
 
     # Train and evaluate different models
     models = [
@@ -180,7 +216,8 @@ def main(dataset:str, llm:str):
         'adaboost'
     ]
     for model_name in models:
-        train_and_evaluate(X_balanced, y_balanced, model_name)
+        print(f"\nTraining and evaluating model: {model_name}")
+        train_and_evaluate(X_balanced, y_balanced, groups_balanced, model_name)
 
 
 if __name__ == "__main__":
@@ -191,18 +228,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["HumanEval", "MBPP", "LeetCode"],
+        choices=VALID_DATASETS,
         required=True,
-        help="Specify the dataset to use. Choices are: 'HumanEval' or 'MBPP' or 'LeetCode'."
+        help=f"Specify the dataset to use. Choices are: {VALID_DATASETS}."
     )
 
     # Add the 'LLM' argument with restricted choices, allowing future extensions
     parser.add_argument(
         "--llm",
         type=str,
-        choices=["gpt-4o", "gpt-4o-mini", "gpt-4", "gpt-3.5-turbo"],
+        choices=VALID_LLMS,
         required=True,
-        help="Specify the LLM to use. Choices are: 'gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-3.5-turbo'."
+        help=f"Specify the LLM to use. Choices are: {VALID_LLMS}."
     )
 
     # Parse the arguments

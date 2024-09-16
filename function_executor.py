@@ -1,5 +1,7 @@
-
+import concurrent.futures
+import sys
 import signal
+from typing import List
 class TimeoutException(Exception):
     pass
 
@@ -7,38 +9,36 @@ class TimeoutException(Exception):
 def timeout_handler(signum, frame):
     return False
 
-def run_testcase(func_str, timeout=5):
+
+def target(func_str):
+    try:
+        exec(func_str, {})
+    except Exception as e:
+        raise e
+
+def run_testcase(func_str, timeout=5) -> int:
     """
-    Executes the function definition from the string with a specified timeout.
+    Executes the function definition and test case from the string with a specified timeout.
 
     Args:
-    - func_str (str): A string containing the function definition.
-    - timeout (int): The number of seconds to wait before timing out (default is 5 seconds).
+        func_str (str): A string containing the function definition and test cases.
+        timeout (int): The number of seconds to wait before timing out (default is 5 seconds).
 
     Returns:
-    - bool: True if the function is defined successfully, False if there's an error or a timeout occurs.
+        bool: True if the code executes successfully within the timeout,
+              False if there's an error or a timeout occurs.
     """
-    # Set up the alarm signal to handle timeouts
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(timeout)  # Set the timeout
-    # print(func_str)
-    local_vars = {}
-    try:
-        # print(func_str)
-        # print(func_str)
-        # func_str = '''def first_repeated_char(str1):
-        #     for index, c in enumerate(str1):
-        #         if str1[:index + 1].count(c) > 1:
-        #             return c'''
-        # print(func_str)
-        exec(func_str, {}, local_vars)
-        signal.alarm(0)  # Disable the alarm after successful execution
-        return True
-    except TimeoutException as e:
-        print(e)
-        raise False
-    except Exception as e:
-        print(e)
-        return False
-    finally:
-        signal.alarm(0)  # Ensure the alarm is disabled
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        # Submit the target function with func_str as an argument
+        future = executor.submit(target, func_str)
+        try:
+            # Wait for the function to complete within the timeout
+            future.result(timeout=timeout)
+            return 1
+        except concurrent.futures.TimeoutError:
+            # print(f"Function execution timed out for \n : {func_str}")
+            return 0
+        except Exception as e:
+            # Catch any other exceptions that may occur
+            # print(f"An unexpected error occurred: {e} for \n : {func_str}")
+            return 0
