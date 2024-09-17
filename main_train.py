@@ -3,7 +3,7 @@ import sys
 import scipy
 import numpy as np
 import pandas as pd
-from typing import List
+from typing import List, Dict, Any
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
@@ -18,9 +18,13 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.utils import resample
 from xgboost import XGBClassifier  # For XGBoost
 from lightgbm import LGBMClassifier  # For LightGBM
-from log_probs import LogProb, TestCase, get_all_tests, RawLogProbs
+from log_probs import LogProb, TestCase, get_all_tests, RawLogProbs, Function
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from sklearn.model_selection import GroupKFold, KFold
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score
+from sklearn.impute import SimpleImputer
+from test_coverage import measure_coverage
+
 # from catboost import CatBoostClassifier
 class FeatureExtractionStrategy:
     def extract_features(self, log_probs: List[LogProb]) -> dict:
@@ -45,7 +49,7 @@ class StatisticalFeatureExtraction(FeatureExtractionStrategy):
             'total': len(probs),
             'variance': np.var(probs) if np.var(probs) is not None else 0,
             # 'kurtosis': scipy.stats.kurtosis(probs) if scipy.stats.kurtosis(probs) is not None else 0,
-            'entropy': scipy.stats.entropy(probs) if scipy.stats.entropy(probs) is not None else 0,
+            # 'entropy': scipy.stats.entropy(probs) if scipy.stats.entropy(probs) is not None else 0,
 
         }
 
@@ -104,37 +108,145 @@ def prepare_data(features: List[dict]):
 
 
 # Function to train and evaluate models
-def train_and_evaluate(X, y, groups, model_name: str):
-    # Scaling and model pipeline
+def train_and_evaluate(
+    X: pd.DataFrame,
+    y: pd.Series,
+    groups: pd.Series,
+    model_name: str,
+    threshold: float = 0.8,
+    min_instances_per_group: int = 3
+):
+    """
+    Train and evaluate a model with a custom classification threshold,
+    capturing the association between predicted probabilities and groups,
+    and selecting instances based on threshold and group constraints.
+
+    Parameters:
+    - X: Feature dataframe (includes 'test_case_id').
+    - y: Target series.
+    - groups: Group labels for GroupKFold.
+    - model_name: Name identifier for the model.
+    - threshold: Classification threshold for the positive class.
+    - min_instances_per_group: Minimum number of instances to select per group.
+
+    Returns:
+    - None (prints selection statistics).
+    """
+    # Extract test_case_id from X
+    test_case_ids = X['test_case_id']
+    X_features = X.drop(columns=['test_case_id'])
+
+    # Initialize the pipeline with scaling and classifier
     pipeline = Pipeline([
+        ('imputer', SimpleImputer(strategy='mean')),
         ('scaler', StandardScaler()),
         ('classifier', ModelFactory.get_model(model_name))
     ])
 
     # Set up GroupKFold cross-validation
     group_kfold = GroupKFold(n_splits=5)
-    kf = KFold(n_splits=5, shuffle=True, random_state=42)
     fold = 1
     accuracies = []
+    precisions = []
+    recalls = []
+    f1_scores = []
+    confusion_matrices = []
+    y_prob_with_groups = []  # List to store y_prob, group labels, and test_case_ids
 
-    for train_index, test_index in group_kfold.split(X, y, groups=groups):
-    # for train_index, test_index in kf.split(X, y):
-        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+    for train_index, test_index in group_kfold.split(X_features, y, groups=groups):
+        # Split the data
+        X_train, X_test = X_features.iloc[train_index], X_features.iloc[test_index]
         y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+        groups_test = groups.iloc[test_index].reset_index(drop=True)  # Reset index for alignment
+        test_case_ids_test = test_case_ids.iloc[test_index].reset_index(drop=True)
 
         pipeline.fit(X_train, y_train)
-        y_pred = pipeline.predict(X_test)
-        accuracy = accuracy_score(y_test, y_pred)
-        accuracies.append(accuracy)
 
-        # print(f"Fold {fold} - Accuracy: {accuracy:.2f}")
-        # print(classification_report(y_test, y_pred))
+        # Obtain predicted probabilities
+        if hasattr(pipeline.named_steps['classifier'], "predict_proba"):
+            y_prob = pipeline.predict_proba(X_test)[:, 1]
+        elif hasattr(pipeline.named_steps['classifier'], "decision_function"):
+            y_scores = pipeline.decision_function(X_test)
+            y_prob = 1 / (1 + np.exp(-y_scores))  # Sigmoid to convert scores to probabilities
+        else:
+            raise AttributeError("The classifier does not have predict_proba or decision_function methods.")
+
+        # Apply threshold to get predictions
+        y_pred = (y_prob >= threshold).astype(int)
+
+        # Calculate metrics
+        accuracy = accuracy_score(y_test, y_pred)
+        precision = precision_score(y_test, y_pred, zero_division=0)
+        recall = recall_score(y_test, y_pred, zero_division=0)
+        f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+        cm = confusion_matrix(y_test, y_pred)
+
+        # Store metrics
+        accuracies.append(accuracy)
+        precisions.append(precision)
+        recalls.append(recall)
+        f1_scores.append(f1)
+        confusion_matrices.append(cm)
+
+        # Store y_prob with corresponding group labels, test_case_ids, and true labels
+        fold_y_prob_df = pd.DataFrame({
+            'y_prob': y_prob,
+            'group': groups_test,
+            'test_case_id': test_case_ids_test,
+            'y_true': y_test.reset_index(drop=True),
+            'fold': fold
+        })
+        y_prob_with_groups.append(fold_y_prob_df)
+
         fold += 1
 
+    # Concatenate all y_prob_with_groups into a single DataFrame
+    all_y_prob_with_groups = pd.concat(y_prob_with_groups, ignore_index=True)
+
+    def select_top_instances(group_df):
+        # Select instances above the threshold
+        selected = group_df[group_df['y_prob'] >= threshold]
+        if len(selected) >= min_instances_per_group:
+            return selected
+        else:
+            needed = min_instances_per_group - len(selected)
+            # Select top 'needed' instances from the group, excluding already selected
+            remaining = group_df[~group_df.index.isin(selected.index)]
+            additional = remaining.sort_values('y_prob', ascending=False).head(needed)
+            # Combine selected and additional
+            return pd.concat([selected, additional])
+
+    # Apply selection per group
+    final_selected_df = all_y_prob_with_groups.groupby('group').apply(select_top_instances).reset_index(drop=True)
+
+    # Compute total number of selected instances
+    total_selected = final_selected_df.shape[0]
+
+    # Compute total number of instances with label 0 and 1
+    label_counts = final_selected_df['y_true'].value_counts()
+    label_0_count = label_counts.get(0, 0)
+    label_1_count = label_counts.get(1, 0)
+
+    # Format selected test_case_ids per group
+    selected_ids_per_group = final_selected_df.groupby('group')['test_case_id'].apply(
+        lambda ids: tuple(idx for _, idx in ids)
+    ).to_dict()
+
+    # Print selection statistics
     print(f"Model: {model_name}")
-    print(f"Cross-validated accuracies: {accuracies}")
-    print(f"Mean accuracy: {np.mean(accuracies):.2f}")
-    return np.mean(accuracies)
+    print(f"Threshold: {threshold}")
+    print("=== Selection Statistics ===")
+    print(f"Total selected instances: {total_selected}")
+    print(f"The ratio of instances with label 1: {round(label_1_count / total_selected, 3)}")
+    print("============================")
+
+    # Print selected test case IDs per group
+    # print("\n=== Selected Test Cases per Function ===")
+    # for group, ids in selected_ids_per_group.items():
+    #     print(f"Function {group}: {ids}")
+    # print("========================================\n")
+    return selected_ids_per_group, total_selected, round(label_1_count / total_selected, 3)
+
 
 
 def balance_data(X, y, groups):
@@ -167,22 +279,30 @@ def balance_data(X, y, groups):
 
     return X_balanced, y_balanced, groups_balanced
 
+def evaluate_function(initial_functions: List[Function]):
+    coverage = measure_coverage(functions=initial_functions)
+    print(len(coverage))
+    print(sum(coverage) / len(coverage))
+    return sum(coverage) / len(coverage)
 
 # Main function tying everything together
 def main(dataset: str, llm: str):
     # Extract features
     print('Extracting testcases and running them...')
     functions = get_all_tests(dataset, llm)
+
     all_testcases = []
-    function_ids = []  # New list to store function IDs
-    for i, f in enumerate(functions):
-        for test_case in f.testcases:
+    function_ids = []  # List to store function IDs
+    test_case_ids = []  # List to store unique test case identifiers
+    for func_id, f in enumerate(functions):
+        for test_idx, test_case in enumerate(f.testcases):
             all_testcases.append(test_case)
-            function_ids.append(i)  # Assign function ID to each test case
-        # print(f)
-        # print('---------------------------------------------------')
+            function_ids.append(func_id)
+            test_case_ids.append((func_id, test_idx))  # Assign unique ID
+
     strategy = StatisticalFeatureExtraction()
 
+    # Modify extract_features to also handle test_case_ids if necessary
     features = extract_features(all_testcases, function_ids, strategy)  # Pass function_ids
     if features:
         print("Sample feature:", features[0])
@@ -191,10 +311,17 @@ def main(dataset: str, llm: str):
 
     # Prepare data
     X, y, groups = prepare_data(features)  # Now returns groups
-    print(f"Original dataset size - Number of valid testcases: {y.sum()}, Number of invalid testcases: {len(y) - y.sum()}")
 
+    # Ensure that the order of test_case_ids aligns with X, y, groups
+    # If prepare_data shuffles or modifies the order, you'll need to adjust accordingly
+    # Here, we assume the order is preserved
+    test_case_ids_series = pd.Series(test_case_ids, name='test_case_id')
+
+    # Concatenate test_case_ids with X to maintain alignment
+    X = pd.concat([X.reset_index(drop=True), test_case_ids_series], axis=1)
     # Balance the data
-    X_balanced, y_balanced, groups_balanced = balance_data(X, y, groups)
+    # X_balanced, y_balanced, groups_balanced = balance_data(X, y, groups)
+    X_balanced, y_balanced, groups_balanced = X, y, groups
     true_count_balanced = y_balanced.sum()
     false_count_balanced = len(y_balanced) - true_count_balanced
     print(f"Balanced dataset size - Number of valid testcases: {true_count_balanced}")
@@ -215,10 +342,23 @@ def main(dataset: str, llm: str):
         'mlp',
         'adaboost'
     ]
+    print('initial coverage of the functions....')
+    coverage = evaluate_function(functions)
+    models_performance = {}
     for model_name in models:
         print(f"\nTraining and evaluating model: {model_name}")
-        train_and_evaluate(X_balanced, y_balanced, groups_balanced, model_name)
-
+        selected_ids_per_group, total_selected, ratio = train_and_evaluate(X_balanced, y_balanced, groups_balanced, model_name)
+        temp = functions.copy()
+        for group, ids in selected_ids_per_group.items():
+            temp[group].testcases = [te for idx,te in enumerate(temp[group].testcases) if idx in ids]
+        print(f'coverage of the functions for model {model_name}')
+        coverage = evaluate_function(temp)
+        models_performance[model_name] = {
+            'coverage': coverage,
+            'total_selected': total_selected,
+            'valid_test_case_ration': ratio
+        }
+    print(models_performance)
 
 if __name__ == "__main__":
     # Create an ArgumentParser object

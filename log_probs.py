@@ -1,5 +1,6 @@
 from typing import List
-import numpy as np
+import pickle
+import os
 from function_executor import run_testcase, TimeoutException
 import numpy as np
 from tqdm import tqdm
@@ -35,8 +36,10 @@ class TestCase:
     def __str__(self):
         input_logprobs_str = ", ".join([str(lp) for lp in self.input_logprobs])
         output_logprobs_str = ", ".join([str(lp) for lp in self.output_logprobs]) if self.output_logprobs else "None"
+        second_input_logprobs = ", ".join([str(lp) for lp in self.second_input_logprobs]) if self.second_input_logprobs else "None"
+        second_output_logprobs = ", ".join([str(lp) for lp in self.second_output_logprobs]) if self.second_output_logprobs else "None"
 
-        return f'Text: "{self.text}"\nIs Valid: {self.is_valid}\nInput LogProbs: [{input_logprobs_str}]\nOutput LogProbs: [{output_logprobs_str}]\n'
+        return f'Text: "{self.text}"\nIs Valid: {self.is_valid}\nInput LogProbs: [{input_logprobs_str}]\nOutput LogProbs: [{output_logprobs_str}]\nsecond_input_logprobs: [{second_input_logprobs}]\nsecond_output_logprobs: [{second_output_logprobs}]\n'
 
     def __repr__(self):
         return self.__str__()
@@ -80,17 +83,9 @@ def getter(logprobs):
 def validate_string(input_string):
     # List of unacceptable tokens
     unacceptable_tokens = ('==', ' ', '  ', ',', '[', ']', '\'', '\"' ,')', '(', "\"")
-
-    # Create a pattern to match the unacceptable tokens
     pattern = '|'.join(re.escape(token) for token in unacceptable_tokens)
-
-    # Find all occurrences of the unacceptable tokens in the string
     matches = re.findall(pattern, input_string)
-
-    # Reconstruct the validated part of the string using the unacceptable tokens
     validated_string = ''.join(matches)
-
-    # Check if the input string contains only the unacceptable tokens
     if validated_string == input_string:
         return False
     else:
@@ -121,7 +116,7 @@ def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCas
                                 output_logprobs.append(LogProb(type=2, token=logprob4[0],
                                                                prob=np.round(np.exp(logprob4[1]) * 100, 2)))
 
-                                second_output_logprobs.append(LogProb(type=2,token=logprob4[2][0][0], prob=np.round(np.exp(logprob4[2][0][1]) * 100, 2)))
+                                second_output_logprobs.append(LogProb(type=2,token=logprob4[2][1][0], prob=np.round(np.exp(logprob4[2][1][1]) * 100, 2)))
                             try:
                                 is_passed = run_testcase(ground_truth + '\n' + testcases[textcase_index] , 5)
                                 testcase = TestCase(text=testcases[textcase_index], input_logprobs=input_logprobs,
@@ -142,7 +137,7 @@ def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCas
                             # print(logprob2.token)
                             if validate_string(logprob3[0]):
                                 lp = LogProb(type=1, token=logprob3[0], prob=np.round(np.exp(logprob3[1]) * 100, 2))
-                                second_lp = LogProb(type=1, token=logprob3[2][0][0], prob=np.round(np.exp(logprob3[2][0][1]) * 100, 2))
+                                second_lp = LogProb(type=1, token=logprob3[2][1][0], prob=np.round(np.exp(logprob3[2][1][1]) * 100, 2))
                                 input_logprobs.append(lp)
                                 second_input_logprobs.append(second_lp)
                 if is_break:
@@ -150,34 +145,51 @@ def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCas
     return all_tests
 
 
-def get_all_tests(dataset:str, llm:str):
-    import pickle
-    file_name = f'raw_logprobs/{dataset}_{llm}.pkl'
+def get_all_tests(dataset: str, llm: str) -> List[Function]:
+    # Define the file paths for raw and processed data
+    raw_file_name = f'raw_logprobs/{dataset}_{llm}.pkl'
+    processed_file_name = f'raw_logprobs/{dataset}_{llm}_processed.pkl'
+
+    # Check if the processed file exists
+    if os.path.exists(processed_file_name):
+        print(f'Loading processed functions from {processed_file_name}...')
+        with open(processed_file_name, 'rb') as f:
+            functions: List[Function] = pickle.load(f)
+        return functions
+
+    # Load raw data if processed data does not exist
     try:
-        with open(file_name, 'rb') as f:
+        with open(raw_file_name, 'rb') as f:
             raw_probs: List[RawLogProbs] = pickle.load(f)
     except FileNotFoundError:
-        print(f'file {file_name} not found')
+        print(f'File {raw_file_name} not found')
         raise FileNotFoundError
+
+    # Special handling for HumanEval dataset
     if dataset == 'HumanEval':
-        raw_probs = [r for idx,r in enumerate(raw_probs) if idx!=39]
-    functions: List[Function] = []
-    for prob in tqdm(raw_probs):
-        # print(prob.API_Response.choices[0].message.content)
-        # print(prob.solution + prob.testcases[0])
+        raw_probs = [r for idx, r in enumerate(raw_probs) if idx != 39]
+    if dataset == 'MBPP':
+        raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (184, 244)]
+    functions: List['Function'] = []
+    for idx,prob in tqdm(enumerate(raw_probs)):
+        # if idx == 182:
+        #     continue
+        # print(prob)
+        # print(idx)
         try:
-            testcases: List[TestCase] = get_logprobs(prob.logprobs, prob.testcases, prob.prompt, prob.solution)
+            testcases: List['TestCase'] = get_logprobs(prob.logprobs, prob.testcases, prob.prompt, prob.solution)
         except Exception as e:
-            # raise e
             print(e)
-            print('here')
+            print('Error processing test cases, skipping...')
             continue
-        # for a in prob.API_Response.choices[0].logprobs.content:
-        #     print(a.token)
-        # print(testcases)
-        # print(prob.testcases)
-        # print('----------------------------------------------')
+
+        # Create Function object and append to the list
         f = Function(prompt=prob.prompt, testcases=testcases, solution=prob.solution)
         functions.append(f)
-        print(f)
+
+    # Save processed functions for future use
+    print(f'Saving processed functions to {processed_file_name}...')
+    with open(processed_file_name, 'wb') as f:
+        pickle.dump(functions, f)
+
     return functions

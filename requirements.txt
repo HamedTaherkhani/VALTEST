@@ -13,3 +13,5 @@ transformers
 torch
 bitsandbytes
 accelerate
+coverage
+google-generativeai

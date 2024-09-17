@@ -134,7 +134,7 @@ class LeetCodeLoader:
         solutions = []
         testcases = []
         for idx, instance in enumerate(self.dataset):
-            if idx in [2127, 2172, 2271]:
+            if idx in [1355, 2017, 2127, 2172, 2206, 2271]:
                 continue
             print(idx)
             prompt = self.extract_function_signature(instance['python']) + "\n" + "\t\"\"\" \n" + instance['content'] + "\"\"\""
@@ -143,7 +143,7 @@ class LeetCodeLoader:
             solution = self.extract_python_code(instance['python'])
             code = solution + '\n\n' + '\n'.join(testcase)
             is_passed = run_testcase(code, 5)
-            if solution is not None and testcase != [] and is_passed:
+            if solution is not None and len(testcase) != 0 and is_passed:
                 solutions.append(solution)
                 function_names.append(func_name)
                 testcases.append(testcase)
