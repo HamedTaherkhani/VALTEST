@@ -109,8 +109,8 @@ def generate_testcases(dataset_choice, llm_name):
         llm_requester = OpenaiRequester('gpt-4o')
     elif llm_name == 'gpt-3.5-turbo':
         llm_requester = OpenaiRequester('gpt-3.5-turbo')
-    elif llm_name == 'codellama':
-        llm_requester = HuggingfaceRequester('codellama/CodeLlama-7b-Instruct-hf')
+    elif llm_name == 'llama3':
+        llm_requester = HuggingfaceRequester('meta-llama/Meta-Llama-3-8B')
     elif llm_name == 'magiccoder':
         llm_requester = HuggingfaceRequester('ise-uiuc/Magicoder-S-DS-6.7B')
     elif llm_name == 'gemini':
