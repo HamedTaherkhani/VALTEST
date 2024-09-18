@@ -15,3 +15,6 @@ bitsandbytes
 accelerate
 coverage
 google-generativeai
+autopep8
+astor
+pandas

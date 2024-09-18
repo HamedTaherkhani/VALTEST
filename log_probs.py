@@ -1,7 +1,8 @@
+import sys
 from typing import List
 import pickle
 import os
-from function_executor import run_testcase, TimeoutException
+from function_executor import run_testcases, TimeoutException
 import numpy as np
 from tqdm import tqdm
 import re
@@ -92,10 +93,12 @@ def validate_string(input_string):
         return True
 
 def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCase]:
-    # unacceptable_tokens = (' ==', '==', ' == ', ' ', '  ', ' ,', ',', ' [', '[', ']' , ' ]', '\'',' \'', '\"', ' \"')
     gen = getter(logprobs)
     all_tests: List[TestCase] = []
+    func_str_list = []
+    testcase_data_list = []
     textcase_index = 0
+
     for logprob in gen:
         if 'assert' in logprob[0]:
             for logprob2 in gen:
@@ -105,43 +108,73 @@ def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCas
                     output_logprobs: List[LogProb] = []
                     second_input_logprobs: List[LogProb] = []
                     second_output_logprobs: List[LogProb] = []
+
                     for logprob3 in gen:
-                        # print(logprob3.token)
                         if '==' in logprob3[0]:
                             for logprob4 in gen:
                                 if not validate_string(logprob4[0]):
                                     continue
-                                elif '#' in logprob4[0] or '\n' in logprob4[0]:  # comment here
+                                elif '#' in logprob4[0] or '\n' in logprob4[0]:  # comment or newline
                                     break
-                                output_logprobs.append(LogProb(type=2, token=logprob4[0],
-                                                               prob=np.round(np.exp(logprob4[1]) * 100, 2)))
+                                output_logprobs.append(LogProb(
+                                    type=2,
+                                    token=logprob4[0],
+                                    prob=np.round(np.exp(logprob4[1]) * 100, 2)
+                                ))
+                                second_output_logprobs.append(LogProb(
+                                    type=2,
+                                    token=logprob4[2][1][0],
+                                    prob=np.round(np.exp(logprob4[2][1][1]) * 100, 2)
+                                ))
 
-                                second_output_logprobs.append(LogProb(type=2,token=logprob4[2][1][0], prob=np.round(np.exp(logprob4[2][1][1]) * 100, 2)))
-                            try:
-                                is_passed = run_testcase(ground_truth + '\n' + testcases[textcase_index] , 5)
-                                testcase = TestCase(text=testcases[textcase_index], input_logprobs=input_logprobs,
-                                                    output_logprobs=output_logprobs, is_valid=is_passed, second_input_logprobs=second_input_logprobs, second_output_logprobs=second_output_logprobs)
-                                # print(testcase)
-                                # print('******************************************************')
-                                all_tests.append(testcase)
-                            except TimeoutException as e:
-                                print(1)
-                                pass
-                            finally:
-                                textcase_index += 1
-                                is_break = True
-                                break
+                            # Collect the function string and associated data
+                            func_str = ground_truth + '\n' + testcases[textcase_index]
+                            func_str_list.append(func_str)
+                            testcase_data_list.append({
+                                'text': testcases[textcase_index],
+                                'input_logprobs': input_logprobs,
+                                'output_logprobs': output_logprobs,
+                                'second_input_logprobs': second_input_logprobs,
+                                'second_output_logprobs': second_output_logprobs
+                            })
+                            textcase_index += 1
+                            is_break = True
+                            break
                         elif logprob3[0] == ',':
-                            pass
+                            continue
                         else:
-                            # print(logprob2.token)
                             if validate_string(logprob3[0]):
-                                lp = LogProb(type=1, token=logprob3[0], prob=np.round(np.exp(logprob3[1]) * 100, 2))
-                                second_lp = LogProb(type=1, token=logprob3[2][1][0], prob=np.round(np.exp(logprob3[2][1][1]) * 100, 2))
-                                input_logprobs.append(lp)
-                                second_input_logprobs.append(second_lp)
-                if is_break:
-                    break
+                                input_logprobs.append(LogProb(
+                                    type=1,
+                                    token=logprob3[0],
+                                    prob=np.round(np.exp(logprob3[1]) * 100, 2)
+                                ))
+                                second_input_logprobs.append(LogProb(
+                                    type=1,
+                                    token=logprob3[2][1][0],
+                                    prob=np.round(np.exp(logprob3[2][1][1]) * 100, 2)
+                                ))
+                    if is_break:
+                        break
+            if is_break:
+                continue
+
+    # Run all collected function strings concurrently
+    is_passed_list = run_testcases(func_str_list, timeout=5)
+
+    # Create TestCase instances with the results
+    for i, is_passed in enumerate(is_passed_list):
+        data = testcase_data_list[i]
+        testcase = TestCase(
+            text=data['text'],
+            input_logprobs=data['input_logprobs'],
+            output_logprobs=data['output_logprobs'],
+            is_valid=is_passed,
+            second_input_logprobs=data['second_input_logprobs'],
+            second_output_logprobs=data['second_output_logprobs']
+        )
+        all_tests.append(testcase)
+
     return all_tests
 
 
@@ -155,6 +188,12 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
         print(f'Loading processed functions from {processed_file_name}...')
         with open(processed_file_name, 'rb') as f:
             functions: List[Function] = pickle.load(f)
+            if dataset == "LeetCode":
+                functions = [r for idx, r in enumerate(functions) if idx != 60]
+                # for idx, f in enumerate(functions):
+                #     if 'fraction_to_decimal' in f.prompt:
+                #         print(idx)
+                # sys.exit()
         return functions
 
     # Load raw data if processed data does not exist
@@ -170,6 +209,8 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx != 39]
     if dataset == 'MBPP':
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (184, 244)]
+    if dataset == 'LeetCode':
+        raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (186, 481)]
     functions: List['Function'] = []
     for idx,prob in tqdm(enumerate(raw_probs)):
         # if idx == 182:

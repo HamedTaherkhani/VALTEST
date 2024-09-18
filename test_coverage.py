@@ -106,7 +106,7 @@ def remove_comments_and_empty_lines(code: str) -> str:
 
 def measure_coverage(functions: List[Function]):
     coverage_results = []
-    for idx, func in enumerate(functions):
+    for idx, func in tqdm(enumerate(functions)):
         sol = remove_comments_and_empty_lines(func.solution) + '\n'
         for test_case in func.testcases:
             sol += test_case.text + "\n"

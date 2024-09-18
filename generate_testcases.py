@@ -12,6 +12,8 @@ from MBPPLoader import MBPPLoader
 from leetcode_loader import LeetCodeLoader
 from llm_requester import OpenaiRequester, HuggingfaceRequester
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
+from ds1000_loader import DS1000Loader
+from prompts import PY_TEST_GENERATION_FEW_SHOT_DS1000, PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, PY_TEST_GENERATION_CHAT_INSTRUCTION_DS1000
 # Define an abstract base class for LLM requesters
 
 class RawLogProbs:
@@ -61,6 +63,8 @@ def generate_testcases(dataset_choice, llm_name):
     :param llm_name: Name of the LLM to use
     :return:
     """
+    few_shot = PY_TEST_GENERATION_FEW_SHOT
+    instruction = PY_TEST_GENERATION_CHAT_INSTRUCTION
     if dataset_choice == 0:
         loader = MBPPLoader()
         prompts = loader.get_prompts()
@@ -81,25 +85,18 @@ def generate_testcases(dataset_choice, llm_name):
         solutions = leetcode.get_solutions()
         dataset = zip(prompts, solutions)
         dataset_name = 'LeetCode'
+    elif dataset_choice == 3:
+        ds = DS1000Loader()
+        prompts = ds.get_prompts()
+        solutions = ds.get_solutions()
+        dataset = zip(prompts, solutions)
+        dataset_name = 'DS1000'
+        few_shot = PY_TEST_GENERATION_FEW_SHOT_DS1000
+        instruction = PY_TEST_GENERATION_CHAT_INSTRUCTION_DS1000
     else:
         print('Not a valid dataset selected.')
         return
 
-    PY_TEST_GENERATION_CHAT_INSTRUCTION = """You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring. Do not make any comments on the test cases. Generate 10 to 20 test cases.\n"""
-    PY_TEST_GENERATION_FEW_SHOT = """Examples:
-    func signature:
-    def add3Numbers(x, y, z):
-        \"\"\" Add three numbers together.
-        This function takes three numbers as input and returns the sum of the three numbers.
-        \"\"\"
-    unit tests:
-    assert add3Numbers(1, 2, 3) == 6
-    assert add3Numbers(-1, 2, 3) == 4
-    assert add3Numbers(1, -2, 3) == 2
-    assert add3Numbers(1, 2, -3) == 0
-    assert add3Numbers(-3, -2, -1) == -6
-    assert add3Numbers(0, 0, 0) == 0\n
-    """
     from tqdm import tqdm
     import pickle
     testcases = []
@@ -133,11 +130,13 @@ def generate_testcases(dataset_choice, llm_name):
             return False
 
     for idx, (prompt, solution) in tqdm(enumerate(list(dataset))):
+        content = instruction + few_shot + prompt
+        # print(content)
         API_RESPONSE = llm_requester.get_completion(
             messages=[
                 {
                     "role": "user",
-                    "content": PY_TEST_GENERATION_CHAT_INSTRUCTION + PY_TEST_GENERATION_FEW_SHOT + prompt
+                    "content": content
                 }
             ],
             logprobs=True,
@@ -150,6 +149,7 @@ def generate_testcases(dataset_choice, llm_name):
         all_tests = parse_tests(API_RESPONSE['text'])
         valid_tests = [test for test in all_tests if is_syntax_valid(test)]
         testcases.append(valid_tests)
+        print(valid_tests)
         raw_prob = RawLogProbs(prompt=prompt, logprobs=API_RESPONSE['logprobs'], dataset=dataset_name, id=idx, testcases=valid_tests,
                                solution=solution)
         raw_probs.append(raw_prob)
