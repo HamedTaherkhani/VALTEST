@@ -71,7 +71,7 @@ class HuggingfaceRequester(LLMRequester):
             "": self.device.type  # Automatically handles the best placement based on your setup
         }
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, device_map=device_map, quantization_config=quantization_config)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, device_map=device_map)
 
     def get_completion(self, messages, **kwargs):
         prompt = ''.join([message['content'] for message in messages])

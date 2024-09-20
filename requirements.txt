@@ -18,3 +18,5 @@ google-generativeai
 autopep8
 astor
 pandas
+tensorflow
+scikeras
