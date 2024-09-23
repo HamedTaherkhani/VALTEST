@@ -71,6 +71,7 @@ class HuggingfaceRequester(LLMRequester):
             "": self.device.type  # Automatically handles the best placement based on your setup
         }
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, )
+        self.tokenizer.pad_token = self.tokenizer.eos_token
         self.model = AutoModelForCausalLM.from_pretrained(model_name, device_map=device_map)
 
     def get_completion(self, messages, **kwargs):
