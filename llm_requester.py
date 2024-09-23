@@ -23,7 +23,7 @@ class OpenaiRequester(LLMRequester):
 
     def get_completion(self,
             messages: list[dict[str, str]],
-            max_tokens=1000,
+            max_tokens=1400,
             temperature=0,
             stop=None,
             seed=123,
@@ -70,15 +70,26 @@ class HuggingfaceRequester(LLMRequester):
         device_map = {
             "": self.device.type  # Automatically handles the best placement based on your setup
         }
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, )
         self.model = AutoModelForCausalLM.from_pretrained(model_name, device_map=device_map)
 
     def get_completion(self, messages, **kwargs):
         prompt = ''.join([message['content'] for message in messages])
         input_ids = self.tokenizer.encode(prompt, return_tensors='pt').to(self.device)
-        max_length = kwargs.get('max_tokens', 512) + input_ids.shape[1]
+        max_length = kwargs.get('max_tokens', 1000) + input_ids.shape[1]
+        inputs = self.tokenizer(
+            prompt,
+            return_tensors="pt",  # Return as PyTorch tensors
+            padding=True,  # Enable padding
+            truncation=True,  # Enable truncation
+            max_length=max_length,  # Limit sequence length
+            return_attention_mask=True  # Generate the attention mask
+        )
+
+
+
         outputs = self.model.generate(
-            input_ids,
+            input_ids=inputs['input_ids'],
             max_length=max_length,
             temperature=kwargs.get('temperature', 0.0),
             do_sample=False,
@@ -86,7 +97,8 @@ class HuggingfaceRequester(LLMRequester):
             eos_token_id=self.tokenizer.eos_token_id,
             pad_token_id=self.tokenizer.pad_token_id,
             output_scores=True,
-            return_dict_in_generate=True
+            return_dict_in_generate=True,
+            attention_mask=inputs["attention_mask"],
         )
         generated_sequence = outputs.sequences[0]
         generated_tokens = generated_sequence[input_ids.shape[1]:]  # Exclude prompt tokens

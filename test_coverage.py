@@ -70,7 +70,7 @@ def compute_line_coverage(code_str):
     try:
         compiled_code = compile(code_str, filename, 'exec')
     except SyntaxError as e:
-        return 0, 10
+        return executed_lines, None
 
     # Set the trace function
     sys.settrace(tracer)
@@ -90,7 +90,7 @@ def compute_line_coverage(code_str):
     lines = code_str.splitlines()
     total_lines = len(lines)
     # Build the coverage dictionary
-    return len(executed_lines), total_lines
+    return executed_lines, total_lines
 
 
 def remove_comments_and_empty_lines(code: str) -> str:
@@ -107,12 +107,17 @@ def remove_comments_and_empty_lines(code: str) -> str:
 def measure_coverage(functions: List[Function]):
     coverage_results = []
     for idx, func in tqdm(enumerate(functions)):
-        sol = remove_comments_and_empty_lines(func.solution) + '\n'
+        lines_per_testcase = []
+        total_lines = 1
         for test_case in func.testcases:
+            sol = remove_comments_and_empty_lines(func.solution) + '\n'
             sol += test_case.text + "\n"
-
-        total_executed_lines, total_lines = compute_line_coverage(sol)
-        coverage_results.append(total_executed_lines/total_lines)
+            executed_lines, tot = compute_line_coverage(sol)
+            if tot is not None:
+                total_lines = tot
+            lines_per_testcase.append(executed_lines)
+        # print(lines_per_testcase)
+        coverage_results.append(len(set().union(*lines_per_testcase))/total_lines)
 
         # intersection_results.append(len(set.union(*coverage_results[idx])) / total_lines)
     return coverage_results

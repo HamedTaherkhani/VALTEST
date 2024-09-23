@@ -110,11 +110,13 @@ def generate_testcases(dataset_choice, llm_name):
     elif llm_name == 'gpt-3.5-turbo':
         llm_requester = OpenaiRequester('gpt-3.5-turbo')
     elif llm_name == 'llama3':
-        llm_requester = HuggingfaceRequester('meta-llama/Meta-Llama-3-8B')
+        llm_requester = HuggingfaceRequester('meta-llama/Meta-Llama-3.1-8B-Instruct')
     elif llm_name == 'magiccoder':
         llm_requester = HuggingfaceRequester('ise-uiuc/Magicoder-S-DS-6.7B')
     elif llm_name == 'gemini':
         llm_requester = HuggingfaceRequester('OpenGemini/Gemini-7B')
+    elif llm_name == 'mistral':
+        llm_requester = HuggingfaceRequester('mistralai/Mistral-7B-Instruct-v0.3')
     else:
         print(f"LLM {llm_name} not supported.")
         return

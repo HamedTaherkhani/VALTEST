@@ -24,6 +24,13 @@ from sklearn.model_selection import GroupKFold, KFold
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score
 from sklearn.impute import SimpleImputer
 from test_coverage import measure_coverage
+from scikeras.wrappers import KerasClassifier
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import Dense, Dropout
+from functools import partial
+import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings("ignore")
 
 # from catboost import CatBoostClassifier
 class FeatureExtractionStrategy:
@@ -57,7 +64,7 @@ class StatisticalFeatureExtraction(FeatureExtractionStrategy):
 # Factory for ML Models
 class ModelFactory:
     @staticmethod
-    def get_model(model_name: str):
+    def get_model(model_name: str, input_dim: int = None):
         models = {
             'logistic_regression': LogisticRegression(),
             'svm': SVC(probability=True),
@@ -70,7 +77,8 @@ class ModelFactory:
             'knn': KNeighborsClassifier(),
             'naive_bayes': GaussianNB(),
             'mlp': MLPClassifier(max_iter=500),
-            'adaboost': AdaBoostClassifier()
+            'adaboost': AdaBoostClassifier(),
+            'deep_nn': KerasClassifier(build_fn=partial(create_deep_nn, input_dim=input_dim), epochs=150, batch_size=32, verbose=0)
         }
         return models.get(model_name)
 
@@ -133,6 +141,7 @@ def train_and_evaluate(
     - None (prints selection statistics).
     """
     # Extract test_case_id from X
+    input_dim = X.shape[1]
     test_case_ids = X['test_case_id']
     X_features = X.drop(columns=['test_case_id'])
 
@@ -140,7 +149,7 @@ def train_and_evaluate(
     pipeline = Pipeline([
         ('imputer', SimpleImputer(strategy='mean')),
         ('scaler', StandardScaler()),
-        ('classifier', ModelFactory.get_model(model_name))
+        ('classifier', ModelFactory.get_model(model_name, input_dim=input_dim))
     ])
 
     # Set up GroupKFold cross-validation
@@ -285,12 +294,114 @@ def evaluate_function(initial_functions: List[Function]):
     print(sum(coverage) / len(coverage))
     return sum(coverage) / len(coverage)
 
+def create_deep_nn(input_dim):
+    model = Sequential()
+    model.add(Dense(128, activation='relu', input_dim=input_dim))
+    model.add(Dropout(0.5))
+    model.add(Dense(64, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])# Binary classification
+    return model
+
+
+def visualize_features(features):
+    if features:
+        print("Sample feature:", features[0])
+    else:
+        print("No features extracted.")
+    input_sum = 0
+    output_sum = 0
+    second_input_sum = 0
+    second_output_sum = 0
+
+    input_sum_invalid = 0
+    output_sum_invalid = 0
+    second_input_sum_invalid = 0
+    second_output_sum_invalid = 0
+
+    input_mean_valid = []
+    input_mean_invalid = []
+    output_mean_valid = []
+    output_mean_invalid = []
+
+    valid = 0
+    invalid = 0
+    ##extract features statistics on valid and invalid test cases
+    for i in features:
+        if i['is_valid']:
+            input_sum += i['input_mean']
+            output_sum += i['output_mean']
+            second_input_sum += i['second_input_mean']
+            second_output_sum += i['second_output_mean']
+            input_mean_valid.append(i['input_mean'])
+            output_mean_valid.append(i['output_mean'])
+            valid += 1
+        else:
+            input_sum_invalid += i['input_mean']
+            output_sum_invalid += i['output_mean']
+            second_input_sum_invalid += i['second_input_mean']
+            second_output_sum_invalid += i['second_output_mean']
+            input_mean_invalid.append(i['input_mean'])
+            output_mean_invalid.append(i['output_mean'])
+            invalid += 1
+
+    print(input_sum / valid, '  ', output_sum/ valid, '  ' ,second_input_sum/ valid,'  ', second_output_sum/ valid)
+    print(input_sum_invalid/ invalid, ' ', output_sum_invalid/ invalid, '  ',second_input_sum_invalid/ invalid , '  ', second_output_sum_invalid/ invalid)
+
+    mean_data1 = np.mean(output_mean_valid)
+    mean_data2 = np.mean(output_mean_invalid)
+    counts_data1, bins_data1 = np.histogram(output_mean_valid, bins=50, density=True)
+    counts_data2, bins_data2 = np.histogram(output_mean_invalid, bins=50, density=True)
+
+    # Plot the line for Data 1
+    plt.plot(bins_data1[:-1], counts_data1, label='Data 1', color='blue', linestyle='-', marker='o')
+
+    # Plot the line for Data 2
+    plt.plot(bins_data2[:-1], counts_data2, label='Data 2', color='orange', linestyle='-', marker='o')
+
+    # Add vertical lines for the mean of both datasets
+    plt.axvline(mean_data1, color='blue', linestyle='dashed', linewidth=2, label=f'Mean Data 1: {mean_data1:.2f}')
+    plt.axvline(mean_data2, color='orange', linestyle='dashed', linewidth=2, label=f'Mean Data 2: {mean_data2:.2f}')
+
+    # Adding title and labels
+    plt.title('Line Plot of Two Data Sets with Means')
+    plt.xlabel('Values')
+    plt.ylabel('Density')
+
+    # Show legend
+    plt.legend()
+
+    # Display the plot
+    plt.show()
+
+def remove_unnecessary_functions(functions):
+    print(len(functions))
+    functions_to_remove = []
+    count = 0
+    for idx1, f in enumerate(functions):
+        to_remove_ids = []
+        for idx2, t in enumerate(f.testcases):
+            if len(t.input_logprobs) == 0 and len(t.output_logprobs) == 0:
+                to_remove_ids.append(idx2)
+                count += 1
+        f.testcases = [ff for idx, ff in enumerate(f.testcases) if idx not in to_remove_ids]
+        if len(f.testcases) == 0:
+            functions_to_remove.append(idx1)
+    functions = [f for idx, f in enumerate(functions) if idx not in functions_to_remove]
+    # print(count)
+    print(len(functions))
+    return functions
+
 # Main function tying everything together
 def main(dataset: str, llm: str):
     # Extract features
     print('Extracting testcases and running them...')
     functions = get_all_tests(dataset, llm)
+    functions = remove_unnecessary_functions(functions)
 
+    # print(functions)
+    # return
     all_testcases = []
     function_ids = []  # List to store function IDs
     test_case_ids = []  # List to store unique test case identifiers
@@ -301,14 +412,12 @@ def main(dataset: str, llm: str):
             test_case_ids.append((func_id, test_idx))  # Assign unique ID
 
     strategy = StatisticalFeatureExtraction()
-
+    print(all_testcases)
     # Modify extract_features to also handle test_case_ids if necessary
     features = extract_features(all_testcases, function_ids, strategy)  # Pass function_ids
-    if features:
-        print("Sample feature:", features[0])
-    else:
-        print("No features extracted.")
+    visualize_features(features)
 
+    # return
     # Prepare data
     X, y, groups = prepare_data(features)  # Now returns groups
 
@@ -329,6 +438,7 @@ def main(dataset: str, llm: str):
 
     # Train and evaluate different models
     models = [
+        # 'deep_nn',
         'logistic_regression',
         'svm',
         'decision_tree',
@@ -348,6 +458,7 @@ def main(dataset: str, llm: str):
     for model_name in models:
         print(f"\nTraining and evaluating model: {model_name}")
         selected_ids_per_group, total_selected, ratio = train_and_evaluate(X_balanced, y_balanced, groups_balanced, model_name)
+        # print(selected_ids_per_group)
         temp = functions.copy()
         for group, ids in selected_ids_per_group.items():
             temp[group].testcases = [te for idx,te in enumerate(temp[group].testcases) if idx in ids]
