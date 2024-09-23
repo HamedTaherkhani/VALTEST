@@ -85,7 +85,7 @@ class HuggingfaceRequester(LLMRequester):
             truncation=True,  # Enable truncation
             max_length=max_length,  # Limit sequence length
             return_attention_mask=True  # Generate the attention mask
-        )
+        ).to(self.device)
 
 
 
