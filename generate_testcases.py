@@ -2,6 +2,7 @@ import ast
 import textwrap
 import argparse
 import sys
+import re
 from math import exp
 import numpy as np
 from IPython.display import display, HTML
@@ -55,6 +56,16 @@ def correct_indentation(code):
         return None
     except Exception as e:
         print("An error occurred:", e)
+        return None
+
+def get_function_name(func_str):
+    pattern = r"def\s+(\w+)\s*\((.*?)\)\s*:"
+    match = re.search(pattern, func_str)
+
+    if match:
+        func_name = match.group(1)
+        return func_name
+    else:
         return None
 
 def generate_testcases(dataset_choice, llm_name):
@@ -124,9 +135,14 @@ def generate_testcases(dataset_choice, llm_name):
     def parse_tests(tests: str):
         return [test.strip() for test in tests.splitlines() if "assert" in test]
 
-    def is_syntax_valid(code: str) -> bool:
+    def is_syntax_valid(code: str, func_name) -> bool:
         try:
             ast.parse(code)
+            if func_name is not None:
+                if func_name in code:
+                    return True
+                else:
+                    return False
             return True
         except Exception:
             return False
@@ -149,8 +165,10 @@ def generate_testcases(dataset_choice, llm_name):
         # print(API_RESPONSE['text'])
         # print('-------------------------------------------')
         all_tests = parse_tests(API_RESPONSE['text'])
-        valid_tests = [test for test in all_tests if is_syntax_valid(test)]
+        func_name = get_function_name(solution)
+        valid_tests = [test for test in all_tests if is_syntax_valid(test, func_name)]
         testcases.append(valid_tests)
+
         print(valid_tests)
         raw_prob = RawLogProbs(prompt=prompt, logprobs=API_RESPONSE['logprobs'], dataset=dataset_name, id=idx, testcases=valid_tests,
                                solution=solution)
