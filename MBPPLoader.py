@@ -78,23 +78,6 @@ class MBPPLoader:
             entry += ":\n  \"\"\"" + a['prompt'] + "\"\"\""
             self.prompts_.append(entry)
 
-    def get_generated_testcases(self):
-        import os
-        script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
-        rel_path = "testcases/mbpp_generated_testcases"
-        abs_file_path = os.path.join(script_dir, rel_path)
-        with open(abs_file_path, 'rb') as fp:
-            item_list = pickle.load(fp)
-        def filter_list(l):
-            temp = []
-            for i in l:
-                if 'assert False' in i or 'assert True' in i:
-                    continue
-                temp.append(i)
-            return temp[:10]
-        item_list = map(filter_list, item_list)
-        return list(item_list)
-
     def get_prompts(self):
         return self.prompts_
 

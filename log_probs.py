@@ -451,6 +451,14 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
                 #     if 'fraction_to_decimal' in f.prompt:
                 #         print(idx)
                 # sys.exit()
+            if dataset == "LeetCode" and llm == "llama3":
+                functions = [r for idx, r in enumerate(functions) if idx != 286]
+            if dataset == "MBPP" and llm == "gpt-4o":
+                functions = [r for idx, r in enumerate(functions) if idx != 400]
+            if dataset == "HumanEval" and llm == "llama3":
+                functions = [r for idx, r in enumerate(functions) if idx != 79]
+            if dataset == "HumanEval" and llm == "gpt-4o":
+                functions = [r for idx, r in enumerate(functions) if idx != 146]
         return functions
 
     # Load raw data if processed data does not exist
@@ -464,14 +472,16 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
     # Special handling for HumanEval dataset
     if dataset == 'HumanEval':
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx != 39]
-    if dataset == 'MBPP':
+    if dataset == 'MBPP' and llm == 'gpt-4o':
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (184, 244)]
     if dataset == 'LeetCode':
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (186, 481)]
     # print(raw_probs[50])
     functions: List['Function'] = []
-
+    if dataset == 'MBPP' and llm == "llama3":
+        raw_probs = [r for idx, r in enumerate(raw_probs) if idx != 250]
     for idx,prob in tqdm(enumerate(raw_probs)):
+        print(idx)
         # if idx == 182:
         #     continue
         # print(prob)
@@ -482,7 +492,7 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
             if len(prob.testcases) == 0:
                 continue
             if dataset == 'DS1000':
-                testcases: List['TestCase'] = get_logprobs_dynamic(prob.logprobs, prob.testcases, prob.prompt, prob.solution)
+                testcases: List['TestCase'] = get_logprobs_dynamic(prob.logprobs, prob.testcases, prob.prompt, prob.solution, dataset)
             else:
                 # print(prob.testcases)
                 testcases: List['TestCase'] = get_logprobs_dynamic(prob.logprobs, prob.testcases, prob.prompt, prob.solution, dataset)

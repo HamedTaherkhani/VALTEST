@@ -1,5 +1,7 @@
 import argparse
 import sys
+from pyexpat import features
+import copy
 import scipy
 import numpy as np
 import pandas as pd
@@ -290,9 +292,9 @@ def balance_data(X, y, groups):
 
 def evaluate_function(initial_functions: List[Function]):
     coverage = measure_coverage(functions=initial_functions)
-    print(len(coverage))
-    print(sum(coverage) / len(coverage))
-    return sum(coverage) / len(coverage)
+    coverage = round(sum(coverage) / len(coverage), 3)
+    print(coverage)
+    return coverage
 
 def create_deep_nn(input_dim):
     model = Sequential()
@@ -381,10 +383,17 @@ def remove_unnecessary_functions(functions):
     count = 0
     for idx1, f in enumerate(functions):
         to_remove_ids = []
+        # print('-------------------------------------------------------------------------------------------------------')
+        # print(f)
+        # print(idx1)
         for idx2, t in enumerate(f.testcases):
             if len(t.input_logprobs) == 0 and len(t.output_logprobs) == 0:
                 to_remove_ids.append(idx2)
                 count += 1
+            if len(t.output_logprobs) == 1:
+                if t.output_logprobs[0] is None:
+                    to_remove_ids.append(idx2)
+                    count += 1
         f.testcases = [ff for idx, ff in enumerate(f.testcases) if idx not in to_remove_ids]
         if len(f.testcases) == 0:
             functions_to_remove.append(idx1)
@@ -400,7 +409,6 @@ def main(dataset: str, llm: str):
     functions = get_all_tests(dataset, llm)
     functions = remove_unnecessary_functions(functions)
 
-    # print(functions)
     # return
     all_testcases = []
     function_ids = []  # List to store function IDs
@@ -412,9 +420,10 @@ def main(dataset: str, llm: str):
             test_case_ids.append((func_id, test_idx))  # Assign unique ID
 
     strategy = StatisticalFeatureExtraction()
-    print(all_testcases)
+    # print(all_testcases)
     # Modify extract_features to also handle test_case_ids if necessary
     features = extract_features(all_testcases, function_ids, strategy)  # Pass function_ids
+    print(features[0])
     visualize_features(features)
 
     # return
@@ -435,6 +444,7 @@ def main(dataset: str, llm: str):
     false_count_balanced = len(y_balanced) - true_count_balanced
     print(f"Balanced dataset size - Number of valid testcases: {true_count_balanced}")
     print(f"Balanced dataset size - Number of invalid testcases: {false_count_balanced}")
+    print(f'Valid Testcase Ratio" {round(true_count_balanced/ (false_count_balanced + true_count_balanced), 2)}')
 
     # Train and evaluate different models
     models = [
@@ -459,10 +469,11 @@ def main(dataset: str, llm: str):
         print(f"\nTraining and evaluating model: {model_name}")
         selected_ids_per_group, total_selected, ratio = train_and_evaluate(X_balanced, y_balanced, groups_balanced, model_name)
         # print(selected_ids_per_group)
-        temp = functions.copy()
+        temp = copy.deepcopy(functions)
         for group, ids in selected_ids_per_group.items():
             temp[group].testcases = [te for idx,te in enumerate(temp[group].testcases) if idx in ids]
         print(f'coverage of the functions for model {model_name}')
+        # print(temp[0])
         coverage = evaluate_function(temp)
         models_performance[model_name] = {
             'coverage': coverage,
