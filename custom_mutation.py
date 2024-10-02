@@ -1,9 +1,13 @@
 import ast
 import copy
+import sys
+
 from tqdm import tqdm
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Set
 import concurrent.futures
+import signal
+TIMEOUT = 5  # Timeout in seconds for each mutant execution
 
 class MutationOperator(ABC):
     @abstractmethod
@@ -168,10 +172,56 @@ class LOROperator(MutationOperator):
             mutants.append(mutated_tree)
         return mutants
 
+def process_mutant(mutant_code, function_name, test_cases):
+    # Compile mutant function
+    mutant_namespace = {}
+    try:
+        exec(mutant_code, mutant_namespace)
+    except Exception as e:
+        return True  # Mutant is killed
+
+    mutant_function = mutant_namespace.get(function_name)
+    if not mutant_function:
+        return True  # Mutant is killed
+
+    # Run all test cases
+    all_test_cases = '\n'.join(test_cases) + '\n'
+    test_namespace_mutant = mutant_namespace.copy()
+    mutant_passed = run_test_case(all_test_cases, test_namespace_mutant)
+    if not mutant_passed:
+        return True  # Mutant is killed
+
+    return False  # Mutant survived
+
+class TimeoutException(Exception):
+    pass
+
+def timeout_handler(signum, frame):
+    raise TimeoutException("Execution timed out!")
+
+
+def run_test_case(test_case_code, namespace, timeout_seconds=5):
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout_seconds)
+
+    try:
+        # Attempt to execute the test case
+        exec(test_case_code, namespace)
+        return True  # Test passed
+    except AssertionError:
+        return False  # Test failed
+    except TimeoutException:
+        return False  # Timeout exceeded
+    except Exception as e: ## not expected
+        raise e  # Other exceptions
+    finally:
+        # Cancel the alarm
+        signal.alarm(0)
+
 class MutationTestFramework:
     def __init__(self):
         self.mutation_operators = []
-        self.mutants_per_operation = 5
+        self.mutants_per_operation = 10
 
     def add_mutation_operator(self, operator: MutationOperator):
         self.mutation_operators.append(operator)
@@ -236,99 +286,45 @@ class MutationTestFramework:
 
             num_mutants = len(unique_mutants)
             num_killed = 0
-            print(num_mutants)
-            for mutant_ast in unique_mutants:
-                mutant_code = ast.unparse(mutant_ast)
 
-                # Compile mutant function
-                mutant_namespace = {}
-                try:
-                    exec(mutant_code, mutant_namespace)
-                except Exception as e:
-                    num_killed += 1
-                    continue
-
-                mutant_function = mutant_namespace.get(function_name)
-                if not mutant_function:
-                    num_killed += 1
-                    continue
-
-                # killed = False
-                # Run all test cases
-                all_test_cases = '\n'.join(test_cases) + '\n'
-                test_namespace_mutant = mutant_namespace.copy()
-                mutant_passed = self.run_test_case(all_test_cases, test_namespace_mutant)
-                if not mutant_passed:
-                    num_killed += 1
-                # for test_case_code in test_cases:
-                #     test_namespace_original = namespace.copy()
-                #     test_namespace_mutant = mutant_namespace.copy()
-                #
-                #     # original_passed = self.run_test_case(test_case_code, test_namespace_original)
-                #     mutant_passed = self.run_test_case(test_case_code, test_namespace_mutant)
-                #
-                #     # If the test case passes on the original but fails on the mutant, the mutant is killed
-                #     if not mutant_passed:
-                #         killed = True
-                #         break  # Mutant is killed; no need to run remaining test cases
-                #
-                # if killed:
-                #     num_killed += 1
+            # Use ProcessPoolExecutor to run mutants concurrently with a timeout
+            with concurrent.futures.ProcessPoolExecutor() as executor:
+                futures = [executor.submit(process_mutant, mutant_code, function_name, test_cases) for mutant_code in mutant_codes]
+                for idx, future in enumerate(concurrent.futures.as_completed(futures)):
+                    # print(idx)
+                    try:
+                        killed = future.result(timeout=TIMEOUT)
+                        if killed:
+                            num_killed += 1
+                    except concurrent.futures.TimeoutError:
+                        num_killed += 1  # If timeout, mutant is considered killed
+                        print("Mutant execution timed out and is considered killed.")
+                    except Exception as e:
+                        num_killed += 1  # If exception, mutant is considered killed
+                        # print(f"Exception occurred: {e}")
+                        # print(function_code)
+                        # print(mutant_codes)
+                        # print(test_cases)
+                        # sys.exit()
 
             mutation_score = (num_killed / num_mutants) if num_mutants > 0 else 1.0
             mutation_scores.append(mutation_score)
             total_mutants += num_mutants
             total_killed += num_killed
             all_mutant_codes.append(mutant_codes)
-            print(mutation_scores)
 
-        total_mutation_score = (total_killed / total_mutants) if total_mutants > 0 else 1.0
+        total_mutation_score = total_killed / total_mutants
 
         return mutation_scores, total_mutation_score, all_mutant_codes
 
-    def run_test_case(self, test_case_code, namespace):
-        try:
-            exec(test_case_code, namespace)
-            return True  # Test passed
-        except AssertionError:
-            return False  # Test failed
-        except Exception as e: ## not expected
-            return e  # Exception occurred
-
-# Example usage:
 def mutation_testing(functions_and_tests):
     framework = MutationTestFramework()
     framework.add_mutation_operator(AOROperator())
     framework.add_mutation_operator(ROROperator())
     framework.add_mutation_operator(NOIOperator())
-    framework.add_mutation_operator(VROperator())
+    # framework.add_mutation_operator(VROperator())
     framework.add_mutation_operator(CROperator())
     framework.add_mutation_operator(LOROperator())
     # Add other mutation operators as needed
     mutation_scores, total_mutation_score, all_mutant_codes = framework.run_tests(functions_and_tests)
     return mutation_scores, total_mutation_score, all_mutant_codes
-
-# Example functions and test cases
-# functions_and_tests = [
-#     (
-#         '''
-# def add(a, b):
-#     return a + b
-# ''',
-#         [
-#             'assert add(1, 2) == 3',
-#             'assert add(-1, 5) == 4'
-#         ]
-#     ),
-#     (
-#         '''
-# def is_positive(n):
-#     return n > 0
-# ''',
-#         [
-#             'assert is_positive(5) == True',
-#             'assert is_positive(-3) == False'
-#         ]
-#     )
-# ]
-#
