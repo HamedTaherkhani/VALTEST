@@ -207,7 +207,7 @@ def extract_import_statements(text):
         for t in temp:
             if 'import' in t:
                 valid_imports.append(t)
-
+    valid_imports.extend(['import numpy as np', 'import pandas as pd', 'import datetime', 'import math'])
     return valid_imports
 
 
@@ -262,6 +262,24 @@ def add_four_spaces(text):
     indented_lines = ['    ' + line for line in lines]
     return '\n'.join(indented_lines)
 
+
+def extract_code_content(text: str) -> str:
+    # Use regular expression to find content between <code> and </code>
+    pattern = r"<code>(.*?)<\/code>"
+    match = re.search(pattern, text, re.DOTALL)
+
+    if match:
+        code = match.group(1).strip()
+        lines = code.split('\n')
+
+        # Filter out lines that contain 'load_data()'
+        filtered_lines = [line for line in lines if 'load_data()' not in line]
+
+        # Join the filtered lines back into a single string
+        return '\n'.join(filtered_lines).strip()
+    return ""
+
+
 def get_code(prompt, code_string):
     code_string = remove_specific_line(code_string)
     code_string = correct_indentation(code_string)
@@ -281,7 +299,7 @@ def get_code(prompt, code_string):
         sig = get_signature(prompt, code)[0]
         final_code = '\n'.join(imports) + '\n' + sig.rstrip(' ').rstrip('\n') + ":\n" + add_four_spaces(
             code_string.lstrip(' ').lstrip('\n'))
-    return final_code
+    return extract_code_content(prompt) + '\n' + final_code
 
 
 def get_prompt(initial_prompt, code_string):
@@ -315,6 +333,10 @@ class DS1000Loader:
         for idx, instance in enumerate(self.dataset):
             try:
                 code = get_code(instance['prompt'], instance['reference_code'])
+                res = run_testcase(code)
+                if res == 0:
+                    total_errors += 1
+                    continue
                 prompt = get_prompt(instance['prompt'], code)
                 solutions.append(code)
                 prompts.append(prompt)

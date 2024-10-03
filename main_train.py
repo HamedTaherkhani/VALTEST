@@ -12,7 +12,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, VotingClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -27,11 +27,14 @@ from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, r
 from sklearn.impute import SimpleImputer
 from test_coverage import measure_coverage
 from scikeras.wrappers import KerasClassifier
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+# from tensorflow.python.keras.layers import Dense, Dropout
+from mutation_testing import perform_mutation_testing_for_functions, get_top_level_function_names
 from functools import partial
 import matplotlib.pyplot as plt
 import warnings
+from custom_mutation import mutation_testing
 warnings.filterwarnings("ignore")
 
 # from catboost import CatBoostClassifier
@@ -67,22 +70,57 @@ class StatisticalFeatureExtraction(FeatureExtractionStrategy):
 class ModelFactory:
     @staticmethod
     def get_model(model_name: str, input_dim: int = None):
-        models = {
-            'logistic_regression': LogisticRegression(),
-            'svm': SVC(probability=True),
-            'decision_tree': DecisionTreeClassifier(),
-            'random_forest': RandomForestClassifier(),
-            'gradient_boosting': GradientBoostingClassifier(),
-            'xgboost': XGBClassifier(use_label_encoder=False, eval_metric='logloss'),
-            'lightgbm': LGBMClassifier(),
-            # 'catboost': CatBoostClassifier(verbose=0),
-            'knn': KNeighborsClassifier(),
-            'naive_bayes': GaussianNB(),
-            'mlp': MLPClassifier(max_iter=500),
-            'adaboost': AdaBoostClassifier(),
-            'deep_nn': KerasClassifier(build_fn=partial(create_deep_nn, input_dim=input_dim), epochs=150, batch_size=32, verbose=0)
-        }
-        return models.get(model_name)
+        """
+        Returns a scikit-learn compatible model based on the provided model name.
+
+        Parameters:
+        - model_name: str, name identifier for the model.
+        - input_dim: int, number of input features (required for deep_nn).
+
+        Returns:
+        - model: scikit-learn estimator.
+        """
+        if model_name == 'ensemble':
+            # *** Added Ensemble Model ***
+            # Define the base models for the ensemble
+            base_models = [
+                ('lr', LogisticRegression()),
+                ('svm', SVC(probability=True)),
+                ('rf', RandomForestClassifier()),
+                ('xgb', XGBClassifier(use_label_encoder=False, eval_metric='logloss')),
+                ('lgbm', LGBMClassifier()),
+                ('adaboost', AdaBoostClassifier()),
+                ('gradient_boosting', GradientBoostingClassifier())
+
+            ]
+            # Create a VotingClassifier with soft voting
+            ensemble_model = VotingClassifier(estimators=base_models, voting='soft')
+            return ensemble_model
+        else:
+            models = {
+                'logistic_regression': LogisticRegression(),
+                'svm': SVC(probability=True),
+                'decision_tree': DecisionTreeClassifier(),
+                'random_forest': RandomForestClassifier(),
+                'gradient_boosting': GradientBoostingClassifier(),
+                'xgboost': XGBClassifier(use_label_encoder=False, eval_metric='logloss'),
+                'lightgbm': LGBMClassifier(),
+                # 'catboost': CatBoostClassifier(verbose=0),
+                'knn': KNeighborsClassifier(),
+                'naive_bayes': GaussianNB(),
+                'mlp': MLPClassifier(max_iter=500),
+                'adaboost': AdaBoostClassifier(),
+                'deep_nn': KerasClassifier(
+                    build_fn=partial(create_deep_nn, input_dim=input_dim),
+                    loss='binary_crossentropy',
+                    optimizer='adam',
+                    metrics=['accuracy'],
+                    epochs=150,
+                    batch_size=32,
+                    verbose=0
+                )
+            }
+            return models.get(model_name)
 
 
 # Function to extract features from TestCases
@@ -124,7 +162,7 @@ def train_and_evaluate(
     groups: pd.Series,
     model_name: str,
     threshold: float = 0.8,
-    min_instances_per_group: int = 3
+    min_instances_per_group: int = 5
 ):
     """
     Train and evaluate a model with a custom classification threshold,
@@ -143,10 +181,10 @@ def train_and_evaluate(
     - None (prints selection statistics).
     """
     # Extract test_case_id from X
-    input_dim = X.shape[1]
+    # input_dim = X.shape[1]
     test_case_ids = X['test_case_id']
     X_features = X.drop(columns=['test_case_id'])
-
+    input_dim = X_features.shape[1]
     # Initialize the pipeline with scaling and classifier
     pipeline = Pipeline([
         ('imputer', SimpleImputer(strategy='mean')),
@@ -290,20 +328,84 @@ def balance_data(X, y, groups):
 
     return X_balanced, y_balanced, groups_balanced
 
-def evaluate_function(initial_functions: List[Function]):
-    coverage = measure_coverage(functions=initial_functions)
+
+
+def perform_mutation_testing(functions: List[Function]):
+    functions_tests = []
+    for f in functions:
+        func_names = get_top_level_function_names(f.solution)
+        if len(func_names) == 0:
+            print(f.solution)
+            print('here')
+            continue
+        # functions_tests.append((f.solution, [ff.text for ff in f.testcases if ff.is_valid]))
+        functions_tests.append((func_names, f.solution, [ff.text for ff in f.testcases if ff.is_valid]))
+    all_tests = []
+    for f in functions_tests:
+        all_tests.extend(f[2])
+    print(f'The total number of tests for mutation testing: {len(all_tests)}')
+    # Run mutation testing
+    # print(functions_tests[0:1])
+    print('running mutation testing...')
+
+    #perform custom mutation
+    # mutation_scores, total_mutation_score, all_mutant_codes, mutation_scores_per_operator = mutation_testing(functions_tests)
+    # print(mutation_scores, total_mutation_score, all_mutant_codes)
+    # Display results
+    # for idx, (function_code, test_cases) in enumerate(functions_tests):
+    #     print(f"Function {idx + 1} Mutation Score: {mutation_scores[idx]:.2f}")
+        # print("Generated Mutants:")
+        # for mutant_code in all_mutant_codes[idx]:
+            # print(mutant_code)
+            # print("-" * 40)
+    # print(f"Mutation Score: {total_mutation_score}")
+    # print(f'Mutation scores per operator:{mutation_scores_per_operator}.3f')
+
+    ## perform mutmut mutation testing
+    perform_mutation_testing_for_functions(functions_tests)
+
+
+def downsample_tests(tests):
+    # Desired number of elements after downsampling
+    desired_length = 5
+
+    # Calculate the sampling interval
+    sampling_interval = len(tests) // desired_length
+    if sampling_interval == 0:
+        return tests
+    # Downsample the list to 10 elements
+    downsampled_list = tests[::sampling_interval][:desired_length]
+    return downsampled_list
+
+
+def evaluate_function(functions: List[Function], do_mutation=False):
+    total_tests_before_sample = 0
+    total_tests_after_sample = 0
+    for f in functions:
+        total_tests_before_sample += len(f.testcases)
+        f.testcases = downsample_tests(f.testcases)
+        total_tests_after_sample += len(f.testcases)
+
+
+    print(f'total_tests_before_sample: {total_tests_before_sample}')
+    print(f'total_tests_after_sample: {total_tests_after_sample}')
+
+    coverage = measure_coverage(functions=functions)
     coverage = round(sum(coverage) / len(coverage), 3)
-    print(coverage)
+    if do_mutation:
+        perform_mutation_testing(functions)
     return coverage
 
 def create_deep_nn(input_dim):
     model = Sequential()
     model.add(Dense(128, activation='relu', input_dim=input_dim))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.7))
     model.add(Dense(64, activation='relu'))
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.7))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dropout(0.7))
     model.add(Dense(1, activation='sigmoid'))
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])# Binary classification
+    # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])# Binary classification
     return model
 
 
@@ -403,12 +505,12 @@ def remove_unnecessary_functions(functions):
     return functions
 
 # Main function tying everything together
-def main(dataset: str, llm: str):
+def main(dataset: str, llm: str, mutation:bool=False):
     # Extract features
     print('Extracting testcases and running them...')
     functions = get_all_tests(dataset, llm)
     functions = remove_unnecessary_functions(functions)
-
+    # print(functions)
     # return
     all_testcases = []
     function_ids = []  # List to store function IDs
@@ -448,22 +550,25 @@ def main(dataset: str, llm: str):
 
     # Train and evaluate different models
     models = [
+        'ensemble',
         # 'deep_nn',
-        'logistic_regression',
-        'svm',
-        'decision_tree',
-        'random_forest',
-        'gradient_boosting',
-        'xgboost',
-        'lightgbm',
-        # 'catboost',
-        'knn',
-        'naive_bayes',
-        'mlp',
-        'adaboost'
+        # 'logistic_regression',
+        # 'svm',
+        # 'decision_tree',
+        # 'random_forest',
+        # 'gradient_boosting',
+        # 'xgboost',
+        # 'lightgbm',
+        # # 'catboost',
+        # 'knn',
+        # 'naive_bayes',
+        # 'mlp',
+        # 'adaboost'
     ]
-    print('initial coverage of the functions....')
-    coverage = evaluate_function(functions)
+    print('calculating initial coverage of the functions and mutation score....')
+    coverage = evaluate_function(copy.deepcopy(functions), mutation)
+    print('Initial coverage:')
+    print(coverage)
     models_performance = {}
     for model_name in models:
         print(f"\nTraining and evaluating model: {model_name}")
@@ -472,9 +577,8 @@ def main(dataset: str, llm: str):
         temp = copy.deepcopy(functions)
         for group, ids in selected_ids_per_group.items():
             temp[group].testcases = [te for idx,te in enumerate(temp[group].testcases) if idx in ids]
-        print(f'coverage of the functions for model {model_name}')
-        # print(temp[0])
-        coverage = evaluate_function(temp)
+        print(f'Calculating coverage and mutation score using filtered test cases...')
+        coverage = evaluate_function(temp, mutation)
         models_performance[model_name] = {
             'coverage': coverage,
             'total_selected': total_selected,
@@ -503,9 +607,17 @@ if __name__ == "__main__":
         required=True,
         help=f"Specify the LLM to use. Choices are: {VALID_LLMS}."
     )
-
-    # Parse the arguments
+    parser.add_argument(
+        "--mutation",
+        type=int,
+        default=0,
+        help=f"Specify if mutation should be performed or not. Its takes a lot of time to do mutation, so be careful. Choices are: {0, 1}.",
+        choices=[0, 1]
+    )
     args = parser.parse_args()
-
-    # Call the main function with the provided arguments
-    main(args.dataset, args.llm)
+    file_name = f'output/{args.dataset}_{args.llm}.txt'
+    print(f'Writing the output to {file_name}')
+    with open(file_name, 'w') as f:
+        orig_stdout = sys.stdout
+        sys.stdout = f
+        main(args.dataset, args.llm, args.mutation)

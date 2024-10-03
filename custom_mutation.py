@@ -231,6 +231,10 @@ class MutationTestFramework:
         total_killed = 0
         mutation_scores = []
         all_mutant_codes = []
+        # Changes made: Initialize per-operator dictionaries
+        mutants_per_operator_total = {}
+        killed_per_operator_total = {}
+        operator_names = [op.__class__.__name__ for op in self.mutation_operators]
 
         for function_code, test_cases in tqdm(functions_and_tests):
             try:
@@ -265,66 +269,105 @@ class MutationTestFramework:
                 print(f"Function {function_name} not found after execution.")
                 continue
 
+            # Changes made: Initialize per-operator variables
             mutants = []
             mutant_codes_set: Set[str] = set()
-            mutant_codes = []
+            mutant_codes_per_operator = {}
+            mutants_per_operator_function = {}
+            num_mutants_per_operator = {}
+            num_killed_per_operator = {}
 
             # Generate mutants using all operators
             for operator in self.mutation_operators:
+                operator_name = operator.__class__.__name__
                 operator_mutants = operator.generate_mutants(function_ast)[:self.mutants_per_operation]
-                mutants.extend(operator_mutants)
+                mutants_per_operator_function[operator_name] = operator_mutants
 
             # Filter out duplicates and mutants identical to the original function
-            unique_mutants = []
             original_code = ast.unparse(function_ast)
-            for mutant_ast in mutants:
-                mutant_code = ast.unparse(mutant_ast)
-                if mutant_code != original_code and mutant_code not in mutant_codes_set:
-                    mutant_codes_set.add(mutant_code)
-                    unique_mutants.append(mutant_ast)
-                    mutant_codes.append(mutant_code)
+            for operator_name, operator_mutants in mutants_per_operator_function.items():
+                unique_mutants = []
+                operator_mutant_codes = []
+                for mutant_ast in operator_mutants:
+                    mutant_code = ast.unparse(mutant_ast)
+                    if mutant_code != original_code and mutant_code not in mutant_codes_set:
+                        mutant_codes_set.add(mutant_code)
+                        unique_mutants.append(mutant_ast)
+                        operator_mutant_codes.append(mutant_code)
+                        mutants.append(mutant_ast)
+                mutant_codes_per_operator[operator_name] = operator_mutant_codes
+                num_mutants_per_operator[operator_name] = len(operator_mutant_codes)
 
-            num_mutants = len(unique_mutants)
+            num_mutants = len(mutants)
             num_killed = 0
 
+            # Changes made: Initialize per-operator killed counts
+            for operator_name in operator_names:
+                num_killed_per_operator[operator_name] = 0
+
             # Use ProcessPoolExecutor to run mutants concurrently with a timeout
+            # Changes made: Prepare futures per operator
+            futures_per_operator = {}
             with concurrent.futures.ProcessPoolExecutor() as executor:
-                futures = [executor.submit(process_mutant, mutant_code, function_name, test_cases) for mutant_code in mutant_codes]
+                futures = []
+                mutant_operator_map = {}
+                for operator_name in operator_names:
+                    operator_mutant_codes = mutant_codes_per_operator.get(operator_name, [])
+                    operator_futures = [executor.submit(process_mutant, mutant_code, function_name, test_cases) for mutant_code in operator_mutant_codes]
+                    futures_per_operator[operator_name] = operator_futures
+                    for future in operator_futures:
+                        mutant_operator_map[future] = operator_name
+                        futures.append(future)
+
                 for idx, future in enumerate(concurrent.futures.as_completed(futures)):
-                    # print(idx)
+                    operator_name = mutant_operator_map[future]
                     try:
                         killed = future.result(timeout=TIMEOUT)
                         if killed:
                             num_killed += 1
+                            num_killed_per_operator[operator_name] += 1
                     except concurrent.futures.TimeoutError:
                         num_killed += 1  # If timeout, mutant is considered killed
+                        num_killed_per_operator[operator_name] += 1
                         print("Mutant execution timed out and is considered killed.")
                     except Exception as e:
                         num_killed += 1  # If exception, mutant is considered killed
-                        # print(f"Exception occurred: {e}")
-                        # print(function_code)
-                        # print(mutant_codes)
-                        # print(test_cases)
-                        # sys.exit()
+                        num_killed_per_operator[operator_name] += 1
+
+            # Compute mutation scores per operator
+            for operator_name in operator_names:
+                total_mutants_operator = num_mutants_per_operator.get(operator_name, 0)
+                total_killed_operator = num_killed_per_operator.get(operator_name, 0)
+                total_mutants += total_mutants_operator
+                total_killed += total_killed_operator
+                mutants_per_operator_total[operator_name] = mutants_per_operator_total.get(operator_name, 0) + total_mutants_operator
+                killed_per_operator_total[operator_name] = killed_per_operator_total.get(operator_name, 0) + total_killed_operator
 
             mutation_score = (num_killed / num_mutants) if num_mutants > 0 else 1.0
             mutation_scores.append(mutation_score)
-            total_mutants += num_mutants
-            total_killed += num_killed
-            all_mutant_codes.append(mutant_codes)
+            all_mutant_codes.append(mutant_codes_per_operator)
 
         total_mutation_score = total_killed / total_mutants
 
-        return mutation_scores, total_mutation_score, all_mutant_codes
+        # Compute overall mutation scores per operator
+        mutation_scores_per_operator = {}
+        for operator_name in operator_names:
+            total_mutants_operator = mutants_per_operator_total.get(operator_name, 0)
+            total_killed_operator = killed_per_operator_total.get(operator_name, 0)
+            mutation_score_operator = (total_killed_operator / total_mutants_operator) if total_mutants_operator > 0 else 1.0
+            mutation_scores_per_operator[operator_name] = mutation_score_operator
+
+        return mutation_scores, total_mutation_score, all_mutant_codes, mutation_scores_per_operator
 
 def mutation_testing(functions_and_tests):
     framework = MutationTestFramework()
-    framework.add_mutation_operator(AOROperator())
+    # framework.add_mutation_operator(AOROperator())
     framework.add_mutation_operator(ROROperator())
     framework.add_mutation_operator(NOIOperator())
     # framework.add_mutation_operator(VROperator())
     framework.add_mutation_operator(CROperator())
     framework.add_mutation_operator(LOROperator())
     # Add other mutation operators as needed
-    mutation_scores, total_mutation_score, all_mutant_codes = framework.run_tests(functions_and_tests)
-    return mutation_scores, total_mutation_score, all_mutant_codes
+    # Changes made: Capture mutation_scores_per_operator
+    mutation_scores, total_mutation_score, all_mutant_codes, mutation_scores_per_operator = framework.run_tests(functions_and_tests)
+    return mutation_scores, total_mutation_score, all_mutant_codes, mutation_scores_per_operator

@@ -1,9 +1,9 @@
 import requests
-import openai_requester
+import llm_requester
 from datasets import load_dataset
 import re
 from typing import List, Dict
-from openai_requester import OpenaiRequester
+from llm_requester import OpenaiRequester
 from generate_testcases import RawLogProbs
 # GitHub API token for accessing private repositories or increasing rate limits (optional)
 github_token = "your_github_token"  # Replace with your GitHub token or leave empty if not needed

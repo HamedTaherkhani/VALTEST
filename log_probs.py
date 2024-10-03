@@ -459,6 +459,9 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
                 functions = [r for idx, r in enumerate(functions) if idx != 79]
             if dataset == "HumanEval" and llm == "gpt-4o":
                 functions = [r for idx, r in enumerate(functions) if idx != 146]
+            if dataset == 'HumanEval' and llm == "gpt-3.5-turbo":
+                # print('here')
+                functions = [r for idx, r in enumerate(functions) if idx != 56]
         return functions
 
     # Load raw data if processed data does not exist
@@ -470,18 +473,18 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
         raise FileNotFoundError
 
     # Special handling for HumanEval dataset
-    if dataset == 'HumanEval':
+    if dataset == 'HumanEval' and llm == 'gpt-4o':
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx != 39]
     if dataset == 'MBPP' and llm == 'gpt-4o':
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (184, 244)]
     if dataset == 'LeetCode':
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (186, 481)]
-    # print(raw_probs[50])
-    functions: List['Function'] = []
     if dataset == 'MBPP' and llm == "llama3":
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx != 250]
+    # print(raw_probs[50])
+    functions: List['Function'] = []
     for idx,prob in tqdm(enumerate(raw_probs)):
-        print(idx)
+        # print(idx)
         # if idx == 182:
         #     continue
         # print(prob)
@@ -491,16 +494,14 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
         try:
             if len(prob.testcases) == 0:
                 continue
-            if dataset == 'DS1000':
-                testcases: List['TestCase'] = get_logprobs_dynamic(prob.logprobs, prob.testcases, prob.prompt, prob.solution, dataset)
-            else:
-                # print(prob.testcases)
-                testcases: List['TestCase'] = get_logprobs_dynamic(prob.logprobs, prob.testcases, prob.prompt, prob.solution, dataset)
-                # for t in testcases:
-                #     if t.output_logprobs[0] is None:
-                #         print(idx)
-                #         sys.exit()
-                print(testcases)
+            # print(prob.testcases)
+            testcases: List['TestCase'] = get_logprobs_dynamic(prob.logprobs, prob.testcases, prob.prompt,
+                                                               prob.solution, dataset)
+            # for t in testcases:
+            #     if t.output_logprobs[0] is None:
+            #         print(idx)
+            #         sys.exit()
+            print(testcases)
 
         except Exception as e:
             # print(e)

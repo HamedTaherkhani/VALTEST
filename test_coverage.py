@@ -45,7 +45,7 @@ def calculate_average_coverage(coverage_data: Dict[str, Dict[str, Any]]) -> Dict
     }
 
 
-def compute_line_coverage(code_str):
+def compute_line_coverage(code_str, idx=None):
     """
     Executes the given Python code string and computes its line coverage.
 
@@ -81,7 +81,8 @@ def compute_line_coverage(code_str):
     except Exception as e:
         is_error = True
         # Optionally, handle or log exceptions from the executed code
-        # print(f"Error during execution: {e}")
+        # print()
+        # print(f"Error during execution for idx {idx}: {e}")
         pass
     finally:
         # Remove the trace function to avoid affecting other code
@@ -114,7 +115,7 @@ def measure_coverage(functions: List[Function]):
         for test_case in func.testcases:
             sol = remove_comments_and_empty_lines(func.solution) + '\n'
             sol += test_case.text + "\n"
-            executed_lines, tot = compute_line_coverage(sol)
+            executed_lines, tot = compute_line_coverage(sol, idx)
             if tot is not None:
                 total_lines = tot
             lines_per_testcase.append(executed_lines)

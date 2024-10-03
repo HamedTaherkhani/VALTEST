@@ -20,3 +20,8 @@ astor
 pandas
 tensorflow
 scikeras
+seaborn
+lmfit
+mutmut
+pytest
+junit-xml==1.9
