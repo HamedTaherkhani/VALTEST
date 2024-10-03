@@ -69,7 +69,8 @@ def perform_mutation_testing_for_functions(functions_with_tests):
     import re
     # Create a temporary directory for the project
     # temp_dir = tempfile.mkdtemp()
-    temp_dir = '/home/hamed/PycharmProjects/hallucination/temp2'
+    cwd = os.getcwd()
+    temp_dir = cwd+'/temp2'
     try:
         # Set up environment variables
         os.environ['PYTHONPATH'] = temp_dir
@@ -136,8 +137,6 @@ def perform_mutation_testing_for_functions(functions_with_tests):
             f.write('\n')
         with open(temp_dir + module_file_name, 'w') as f:
             f.write('\n')
-
-        cwd = os.getcwd()
         os.chdir(temp_dir)
 
         # Run pytest to check tests, but proceed even if tests fail
