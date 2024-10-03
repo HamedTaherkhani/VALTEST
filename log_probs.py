@@ -476,12 +476,12 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
 
     # Special handling for HumanEval dataset
     if dataset == 'HumanEval' and llm == 'gpt-4o':
-        raw_probs = [r for idx, r in enumerate(raw_probs) if idx != 39]
-    if dataset == 'MBPP' and llm == 'gpt-4o':
+        raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (39, 147)]
+    elif dataset == 'MBPP' and llm == 'gpt-4o':
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (184, 244)]
-    if dataset == 'LeetCode':
-        raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (186, 481)]
-    if dataset == 'MBPP' and llm == "llama3":
+    elif dataset == 'LeetCode':
+        raw_probs = [r for idx, r in enumerate(raw_probs) if idx not in (70, 186, 481)]
+    elif dataset == 'MBPP' and llm == "llama3":
         raw_probs = [r for idx, r in enumerate(raw_probs) if idx != 250]
     # print(raw_probs[50])
     functions: List['Function'] = []

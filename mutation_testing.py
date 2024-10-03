@@ -86,6 +86,8 @@ def perform_mutation_testing_for_functions(functions_with_tests):
         for func_names, func_code, test_cases in functions_with_tests:
             if len(test_cases) == 0:
                 continue
+            if func_names[0].startswith('test_'):
+                continue
             # if func_names[0] in ('factorize', 'get_odd_collatz', 'minPath'):
             #     print('here')
             #     continue
@@ -111,7 +113,10 @@ def perform_mutation_testing_for_functions(functions_with_tests):
                             imports.add(line.strip())
                         else:
                             test_code_lines.append(line.rstrip())
-
+                imports.add('import math')
+                imports.add('import numpy as np')
+                imports.add('import scipy')
+                imports.add('import pandas as pd')
                 # Write imports
                 for module_name in module_names:
                     f.write(f'from src.{module_names[0]} import {module_name}\n')
