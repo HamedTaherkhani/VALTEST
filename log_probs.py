@@ -2,7 +2,7 @@ import sys
 from typing import List
 import pickle
 import os
-from function_executor import run_testcases, TimeoutException
+from function_executor import run_test_cases, TimeoutException
 import numpy as np
 from tqdm import tqdm
 import re
@@ -287,7 +287,7 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, dataset
     # print(separated_assertions)
     # print(logprobs)
     textcase_index = 0
-    func_str_list = []
+    test_list = []
     all_tests: List[TestCase] = []
     testcase_data_list = []
     for instance in assertions_to_tokens:
@@ -320,8 +320,7 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, dataset
                 token=ins[2][1][0],
                 prob=np.round(np.exp(ins[2][1][1]) * 100, 2)
             ))
-        func_str = ground_truth + '\n' + testcases[textcase_index]
-        func_str_list.append(func_str)
+        test_list.append(testcases[textcase_index])
         testcase_data_list.append({
             'text': testcases[textcase_index],
             'input_logprobs': input_logprobs,
@@ -333,8 +332,12 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, dataset
     # print(separated_assertions)
     # print(assertions_to_tokens[0])
     # print('-------------------------------------------------------------------')
-    is_passed_list = run_testcases(func_str_list, timeout=5)
+    is_passed_list = run_test_cases(ground_truth, test_list, timeout=5)
     for i, is_passed in enumerate(is_passed_list):
+        if is_passed:
+            is_passed = 1
+        else:
+            is_passed = 0
         data = testcase_data_list[i]
         testcase = TestCase(
             text=data['text'],
@@ -352,7 +355,7 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, dataset
 def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCase]:
     gen = getter(logprobs)
     all_tests: List[TestCase] = []
-    func_str_list = []
+    test_list = []
     testcase_data_list = []
     textcase_index = 0
 
@@ -385,8 +388,7 @@ def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCas
                                 ))
 
                             # Collect the function string and associated data
-                            func_str = ground_truth + '\n' + testcases[textcase_index]
-                            func_str_list.append(func_str)
+                            test_list.append(testcases[textcase_index])
                             testcase_data_list.append({
                                 'text': testcases[textcase_index],
                                 'input_logprobs': input_logprobs,
@@ -417,7 +419,7 @@ def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCas
                 continue
 
     # Run all collected function strings concurrently
-    is_passed_list = run_testcases(func_str_list, timeout=5)
+    is_passed_list = run_test_cases(ground_truth, test_list, timeout=5)
 
     # Create TestCase instances with the results
     for i, is_passed in enumerate(is_passed_list):
@@ -501,7 +503,7 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
             #     if t.output_logprobs[0] is None:
             #         print(idx)
             #         sys.exit()
-            print(testcases)
+            # print(testcases)
 
         except Exception as e:
             # print(e)

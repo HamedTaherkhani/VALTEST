@@ -509,6 +509,7 @@ def main(dataset: str, llm: str, mutation:bool=False):
     # Extract features
     print('Extracting testcases and running them...')
     functions = get_all_tests(dataset, llm)
+
     functions = remove_unnecessary_functions(functions)
     # print(functions)
     # return
