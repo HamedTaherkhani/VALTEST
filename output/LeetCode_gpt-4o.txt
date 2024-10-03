@@ -1,0 +1,14 @@
+Extracting testcases and running them...
+Loading processed functions from raw_logprobs/LeetCode_gpt-4o_processed.pkl...
+536
+532
+{'input_mean': 99.74600000000001, 'input_max': 100.0, 'input_min': 98.73, 'input_sum': 498.73, 'input_total': 5, 'input_variance': 0.25806399999999846, 'output_mean': 100.0, 'output_max': 100.0, 'output_min': 100.0, 'output_sum': 200.0, 'output_total': 2, 'output_variance': 0.0, 'second_output_mean': 0.0, 'second_output_max': 0.0, 'second_output_min': 0.0, 'second_output_sum': 0.0, 'second_output_total': 2, 'second_output_variance': 0.0, 'second_input_mean': 0.248, 'second_input_max': 1.24, 'second_input_min': 0.0, 'second_input_sum': 1.24, 'second_input_total': 5, 'second_input_variance': 0.24601599999999996, 'is_valid': 1, 'function_id': 0}
+Sample feature: {'input_mean': 99.74600000000001, 'input_max': 100.0, 'input_min': 98.73, 'input_sum': 498.73, 'input_total': 5, 'input_variance': 0.25806399999999846, 'output_mean': 100.0, 'output_max': 100.0, 'output_min': 100.0, 'output_sum': 200.0, 'output_total': 2, 'output_variance': 0.0, 'second_output_mean': 0.0, 'second_output_max': 0.0, 'second_output_min': 0.0, 'second_output_sum': 0.0, 'second_output_total': 2, 'second_output_variance': 0.0, 'second_input_mean': 0.248, 'second_input_max': 1.24, 'second_input_min': 0.0, 'second_input_sum': 1.24, 'second_input_total': 5, 'second_input_variance': 0.24601599999999996, 'is_valid': 1, 'function_id': 0}
+78.22004992054286    95.80920660764093    9.74765492237342    2.310178613648219
+74.6807589090838   73.87824409799256    11.087868980281737    11.958410356357382
+Balanced dataset size - Number of valid testcases: 6806
+Balanced dataset size - Number of invalid testcases: 2241
+Valid Testcase Ratio" 0.75
+calculating initial coverage of the functions and mutation score....
+total_tests_before_sample: 9047
+total_tests_after_sample: 2477

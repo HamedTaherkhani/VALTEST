@@ -1,0 +1,87 @@
+Extracting testcases and running them...
+Loading processed functions from raw_logprobs/HumanEval_gpt-3.5-turbo_processed.pkl...
+159
+159
+{'input_mean': 99.31333333333335, 'input_max': 100.0, 'input_min': 97.31, 'input_sum': 1191.7600000000002, 'input_total': 12, 'input_variance': 0.9244388888888863, 'output_mean': 99.99, 'output_max': 99.99, 'output_min': 99.99, 'output_sum': 99.99, 'output_total': 1, 'output_variance': 0.0, 'second_output_mean': 0.01, 'second_output_max': 0.01, 'second_output_min': 0.01, 'second_output_sum': 0.01, 'second_output_total': 1, 'second_output_variance': 0.0, 'second_input_mean': 0.4874999999999999, 'second_input_max': 2.11, 'second_input_min': 0.0, 'second_input_sum': 5.849999999999999, 'second_input_total': 12, 'second_input_variance': 0.4732520833333333, 'is_valid': 1, 'function_id': 0}
+Sample feature: {'input_mean': 99.31333333333335, 'input_max': 100.0, 'input_min': 97.31, 'input_sum': 1191.7600000000002, 'input_total': 12, 'input_variance': 0.9244388888888863, 'output_mean': 99.99, 'output_max': 99.99, 'output_min': 99.99, 'output_sum': 99.99, 'output_total': 1, 'output_variance': 0.0, 'second_output_mean': 0.01, 'second_output_max': 0.01, 'second_output_min': 0.01, 'second_output_sum': 0.01, 'second_output_total': 1, 'second_output_variance': 0.0, 'second_input_mean': 0.4874999999999999, 'second_input_max': 2.11, 'second_input_min': 0.0, 'second_input_sum': 5.849999999999999, 'second_input_total': 12, 'second_input_variance': 0.4732520833333333, 'is_valid': 1, 'function_id': 0}
+77.48629386252463    97.00089027346154    8.31037834148663    2.269282279407881
+75.03714648550748   83.87841938937906    8.700602938498319    8.905510699330996
+Balanced dataset size - Number of valid testcases: 1991
+Balanced dataset size - Number of invalid testcases: 697
+Valid Testcase Ratio" 0.74
+calculating initial coverage of the functions and mutation score....
+total_tests_before_sample: 2688
+total_tests_after_sample: 777
+The total number of tests for mutation testing: 609
+running mutation testing...
+Running pytest to check tests...
+All tests passed.
+
+Final Mutation Testing Results:
+Total mutants: 1730
+Killed mutants: 1258
+Survived mutants: 448
+Timeout mutants: 24
+Suspicious mutants: 0
+Overall Mutation Score: 0.73%
+Initial coverage:
+0.956
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 1565, number of negative: 585
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000235 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5070
+[LightGBM] [Info] Number of data points in the train set: 2150, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.727907 -> initscore=0.984029
+[LightGBM] [Info] Start training from score 0.984029
+[LightGBM] [Info] Number of positive: 1543, number of negative: 608
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000510 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5082
+[LightGBM] [Info] Number of data points in the train set: 2151, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.717341 -> initscore=0.931309
+[LightGBM] [Info] Start training from score 0.931309
+[LightGBM] [Info] Number of positive: 1602, number of negative: 549
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000297 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5055
+[LightGBM] [Info] Number of data points in the train set: 2151, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.744770 -> initscore=1.070910
+[LightGBM] [Info] Start training from score 1.070910
+[LightGBM] [Info] Number of positive: 1640, number of negative: 510
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000312 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5091
+[LightGBM] [Info] Number of data points in the train set: 2150, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.762791 -> initscore=1.168041
+[LightGBM] [Info] Start training from score 1.168041
+[LightGBM] [Info] Number of positive: 1614, number of negative: 536
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000258 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5055
+[LightGBM] [Info] Number of data points in the train set: 2150, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.750698 -> initscore=1.102337
+[LightGBM] [Info] Start training from score 1.102337
+Model: ensemble
+Threshold: 0.8
+=== Selection Statistics ===
+Total selected instances: 1488
+The ratio of instances with label 1: 0.886
+============================
+Calculating coverage and mutation score using filtered test cases...
+total_tests_before_sample: 1488
+total_tests_after_sample: 777
+The total number of tests for mutation testing: 684
+running mutation testing...
+Running pytest to check tests...
+All tests passed.
+
+Final Mutation Testing Results:
+Total mutants: 1721
+Killed mutants: 1290
+Survived mutants: 405
+Timeout mutants: 24
+Suspicious mutants: 2
+Overall Mutation Score: 0.75%
+{'ensemble': {'coverage': 0.954, 'total_selected': 1488, 'valid_test_case_ration': 0.886}}
