@@ -439,8 +439,8 @@ def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCas
 
 def get_all_tests(dataset: str, llm: str) -> List[Function]:
     # Define the file paths for raw and processed data
-    raw_file_name = f'raw_logprobs/{dataset}_{llm}.pkl'
-    processed_file_name = f'raw_logprobs/{dataset}_{llm}_processed.pkl'
+    raw_file_name = f'unfiltered_testcases/{dataset}_{llm}.pkl'
+    processed_file_name = f'unfiltered_testcases/{dataset}_{llm}_processed.pkl'
 
     # Check if the processed file exists
     if os.path.exists(processed_file_name):

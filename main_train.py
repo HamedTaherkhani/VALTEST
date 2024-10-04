@@ -379,16 +379,16 @@ def downsample_tests(tests):
 
 
 def evaluate_function(functions: List[Function], do_mutation=False):
-    total_tests_before_sample = 0
-    total_tests_after_sample = 0
-    for f in functions:
-        total_tests_before_sample += len(f.testcases)
-        f.testcases = downsample_tests(f.testcases)
-        total_tests_after_sample += len(f.testcases)
-
-
-    print(f'total_tests_before_sample: {total_tests_before_sample}')
-    print(f'total_tests_after_sample: {total_tests_after_sample}')
+    # total_tests_before_sample = 0
+    # total_tests_after_sample = 0
+    # for f in functions:
+    #     total_tests_before_sample += len(f.testcases)
+    #     f.testcases = downsample_tests(f.testcases)
+    #     total_tests_after_sample += len(f.testcases)
+    #
+    #
+    # print(f'total_tests_before_sample: {total_tests_before_sample}')
+    # print(f'total_tests_after_sample: {total_tests_after_sample}')
 
     coverage = measure_coverage(functions=functions)
     coverage = round(sum(coverage) / len(coverage), 3)

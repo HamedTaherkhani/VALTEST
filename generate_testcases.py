@@ -174,8 +174,8 @@ def generate_testcases(dataset_choice, llm_name):
                                solution=solution)
         raw_probs.append(raw_prob)
     # print(raw_probs)
-    os.makedirs('raw_logprobs', exist_ok=True)
-    with open(f'raw_logprobs/{dataset_name}_{llm_name}.pkl', 'wb') as f:
+    os.makedirs('unfiltered_testcases', exist_ok=True)
+    with open(f'unfiltered_testcases/{dataset_name}_{llm_name}.pkl', 'wb') as f:
         pickle.dump(raw_probs, f)
 
 

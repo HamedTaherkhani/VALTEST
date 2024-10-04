@@ -117,6 +117,7 @@ def perform_mutation_testing_for_functions(functions_with_tests):
                 imports.add('import numpy as np')
                 imports.add('import scipy')
                 imports.add('import pandas as pd')
+                imports.add('import cmath')
                 # Write imports
                 for module_name in module_names:
                     f.write(f'from src.{module_names[0]} import {module_name}\n')
