@@ -34,6 +34,7 @@ from mutation_testing import perform_mutation_testing_for_functions, get_top_lev
 from functools import partial
 import matplotlib.pyplot as plt
 import warnings
+import pickle
 from custom_mutation import mutation_testing
 warnings.filterwarnings("ignore")
 
@@ -550,42 +551,44 @@ def main(dataset: str, llm: str, mutation:bool=False):
     print(f'Valid Testcase Ratio" {round(true_count_balanced/ (false_count_balanced + true_count_balanced), 2)}')
 
     # Train and evaluate different models
-    models = [
-        'ensemble',
-        # 'deep_nn',
-        # 'logistic_regression',
-        # 'svm',
-        # 'decision_tree',
-        # 'random_forest',
-        # 'gradient_boosting',
-        # 'xgboost',
-        # 'lightgbm',
-        # # 'catboost',
-        # 'knn',
-        # 'naive_bayes',
-        # 'mlp',
-        # 'adaboost'
-    ]
+    model_name = 'ensemble'
     print('calculating initial coverage of the functions and mutation score....')
-    coverage = evaluate_function(copy.deepcopy(functions), mutation)
+    # coverage = evaluate_function(copy.deepcopy(functions), mutation)
     print('Initial coverage:')
-    print(coverage)
+    # print(coverage)
     models_performance = {}
-    for model_name in models:
-        print(f"\nTraining and evaluating model: {model_name}")
-        selected_ids_per_group, total_selected, ratio = train_and_evaluate(X_balanced, y_balanced, groups_balanced, model_name)
-        # print(selected_ids_per_group)
-        temp = copy.deepcopy(functions)
-        for group, ids in selected_ids_per_group.items():
-            temp[group].testcases = [te for idx,te in enumerate(temp[group].testcases) if idx in ids]
-        print(f'Calculating coverage and mutation score using filtered test cases...')
-        coverage = evaluate_function(temp, mutation)
-        models_performance[model_name] = {
-            'coverage': coverage,
-            'total_selected': total_selected,
-            'valid_test_case_ration': ratio
-        }
+
+    print(f"\nTraining and evaluating model: {model_name}")
+    selected_ids_per_group, total_selected, ratio = train_and_evaluate(X_balanced, y_balanced, groups_balanced,
+                                                                       model_name)
+    # print(selected_ids_per_group)
+    temp = copy.deepcopy(functions)
+    for group, ids in selected_ids_per_group.items():
+        temp[group].testcases = [te for idx, te in enumerate(temp[group].testcases) if idx in ids]
+    print(f'Calculating coverage and mutation score using filtered test cases...')
+    # coverage = evaluate_function(temp, mutation)
+    models_performance[model_name] = {
+        # 'coverage': coverage,
+        'total_selected': total_selected,
+        'valid_test_case_ration': ratio
+    }
     print(models_performance)
+
+    ## Saving functions with prediction values
+    functions_with_predictions = copy.deepcopy(functions)
+    for group, ids in selected_ids_per_group.items():
+        for idx, test in enumerate(functions_with_predictions[group].testcases):
+            if idx in ids:
+                functions_with_predictions[group].testcases[idx].prediction_is_valid = 1
+            else:
+                functions_with_predictions[group].testcases[idx].prediction_is_valid = 0
+
+
+    filtered_function_file_name = f'filtered_testcases/{dataset}_{llm}.pkl'
+    print(f'Saving filtered functions to {filtered_function_file_name}...')
+    with open(filtered_function_file_name, 'wb') as f:
+        pickle.dump(functions_with_predictions, f)
+
 
 if __name__ == "__main__":
     # Create an ArgumentParser object

@@ -28,13 +28,14 @@ class LogProb:
 
 class TestCase:
     def __init__(self, text, input_logprobs: List[LogProb], output_logprobs: List[LogProb],
-                 second_output_logprobs, second_input_logprobs, is_valid: int = None):
+                 second_output_logprobs, second_input_logprobs, is_valid: int = None, prediction_is_valid: int = None):
         self.text = text
         self.input_logprobs = input_logprobs
         self.output_logprobs = output_logprobs
         self.second_input_logprobs = second_input_logprobs
         self.second_output_logprobs = second_output_logprobs
         self.is_valid = is_valid
+        self.prediction_is_valid = prediction_is_valid
 
     def __str__(self):
         input_logprobs_str = ", ".join([str(lp) for lp in self.input_logprobs])
