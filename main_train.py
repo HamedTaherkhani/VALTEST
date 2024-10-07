@@ -35,6 +35,7 @@ from functools import partial
 import matplotlib.pyplot as plt
 import warnings
 import pickle
+import joblib
 from custom_mutation import mutation_testing
 warnings.filterwarnings("ignore")
 
@@ -287,15 +288,20 @@ def train_and_evaluate(
     print(f"Threshold: {threshold}")
     print("=== Selection Statistics ===")
     print(f"Total selected instances: {total_selected}")
-    print(f"The ratio of instances with label 1: {round(label_1_count / total_selected, 3)}")
+    print(f"The ratio valid test cases: {round(label_1_count / total_selected, 3)}")
     print("============================")
 
+    # pipeline.fit(X_features, y)
+    #
+    # joblib.dump(pipeline, f'saved_models/{model_name}_final_model.pkl')
+    #
+    # print(f"Final model saved as saved_models/{model_name}_final_model.pkl")
     # Print selected test case IDs per group
     # print("\n=== Selected Test Cases per Function ===")
     # for group, ids in selected_ids_per_group.items():
     #     print(f"Function {group}: {ids}")
     # print("========================================\n")
-    return selected_ids_per_group, total_selected, round(label_1_count / total_selected, 3)
+    return selected_ids_per_group, total_selected, round(label_1_count / total_selected, 3), all_y_prob_with_groups
 
 
 
@@ -553,22 +559,22 @@ def main(dataset: str, llm: str, mutation:bool=False):
     # Train and evaluate different models
     model_name = 'ensemble'
     print('calculating initial coverage of the functions and mutation score....')
-    # coverage = evaluate_function(copy.deepcopy(functions), mutation)
+    coverage = evaluate_function(copy.deepcopy(functions), mutation)
     print('Initial coverage:')
-    # print(coverage)
+    print(coverage)
     models_performance = {}
 
     print(f"\nTraining and evaluating model: {model_name}")
-    selected_ids_per_group, total_selected, ratio = train_and_evaluate(X_balanced, y_balanced, groups_balanced,
+    selected_ids_per_group, total_selected, ratio, all_y_prob_with_groups = train_and_evaluate(X_balanced, y_balanced, groups_balanced,
                                                                        model_name)
     # print(selected_ids_per_group)
     temp = copy.deepcopy(functions)
     for group, ids in selected_ids_per_group.items():
         temp[group].testcases = [te for idx, te in enumerate(temp[group].testcases) if idx in ids]
     print(f'Calculating coverage and mutation score using filtered test cases...')
-    # coverage = evaluate_function(temp, mutation)
+    coverage = evaluate_function(temp, mutation)
     models_performance[model_name] = {
-        # 'coverage': coverage,
+        'coverage': coverage,
         'total_selected': total_selected,
         'valid_test_case_ration': ratio
     }
@@ -583,6 +589,9 @@ def main(dataset: str, llm: str, mutation:bool=False):
             else:
                 functions_with_predictions[group].testcases[idx].prediction_is_valid = 0
 
+
+    for index, row in all_y_prob_with_groups.iterrows():
+        functions_with_predictions[row['group']].testcases[row['test_case_id'][1]].prediction_y_prob = row['y_prob']
 
     filtered_function_file_name = f'filtered_testcases/{dataset}_{llm}.pkl'
     print(f'Saving filtered functions to {filtered_function_file_name}...')
