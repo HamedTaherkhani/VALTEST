@@ -1,0 +1,79 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/LeetCode_llama3_processed.pkl...
+470
+470
+{'input_mean': 92.88166666666666, 'input_max': 99.6, 'input_min': 86.31, 'input_sum': 557.29, 'input_total': 6, 'input_variance': 24.54998055555555, 'output_mean': 0, 'output_max': 0, 'output_min': 0, 'output_sum': 0, 'output_total': 0, 'output_variance': 0, 'output_entropy': 0, 'second_output_mean': 0, 'second_output_max': 0, 'second_output_min': 0, 'second_output_sum': 0, 'second_output_total': 0, 'second_output_variance': 0, 'second_output_entropy': 0, 'second_input_mean': 4.163333333333333, 'second_input_max': 10.53, 'second_input_min': 0.22, 'second_input_sum': 24.979999999999997, 'second_input_total': 6, 'second_input_variance': 9.93712222222222, 'is_valid': 1, 'function_id': 0}
+Sample feature: {'input_mean': 92.88166666666666, 'input_max': 99.6, 'input_min': 86.31, 'input_sum': 557.29, 'input_total': 6, 'input_variance': 24.54998055555555, 'output_mean': 0, 'output_max': 0, 'output_min': 0, 'output_sum': 0, 'output_total': 0, 'output_variance': 0, 'output_entropy': 0, 'second_output_mean': 0, 'second_output_max': 0, 'second_output_min': 0, 'second_output_sum': 0, 'second_output_total': 0, 'second_output_variance': 0, 'second_output_entropy': 0, 'second_input_mean': 4.163333333333333, 'second_input_max': 10.53, 'second_input_min': 0.22, 'second_input_sum': 24.979999999999997, 'second_input_total': 6, 'second_input_variance': 9.93712222222222, 'is_valid': 1, 'function_id': 0}
+83.43838994603236    88.05586122499686    7.44817574178021    2.845604824641667
+83.96130928952795   89.86736849568616    7.124435919686975    5.108808971768436
+Balanced dataset size - Number of valid testcases: 2315
+Balanced dataset size - Number of invalid testcases: 2684
+Valid Testcase Ratio" 0.46
+calculating initial coverage of the functions and mutation score....
+The total number of tests for mutation testing: 2315
+running mutation testing...
+Final Mutation Testing Results:
+Total mutants: 9256
+Killed mutants: 7262
+Survived mutants: 1760
+Timeout mutants: 234
+Suspicious mutants: 0
+Overall Mutation Score: 78.46%
+Initial coverage:
+0.968
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 1819, number of negative: 2180
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000310 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5097
+[LightGBM] [Info] Number of data points in the train set: 3999, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.454864 -> initscore=-0.181038
+[LightGBM] [Info] Start training from score -0.181038
+[LightGBM] [Info] Number of positive: 1827, number of negative: 2172
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000446 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5105
+[LightGBM] [Info] Number of data points in the train set: 3999, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.456864 -> initscore=-0.172973
+[LightGBM] [Info] Start training from score -0.172973
+[LightGBM] [Info] Number of positive: 1909, number of negative: 2090
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.079940 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 5107
+[LightGBM] [Info] Number of data points in the train set: 3999, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.477369 -> initscore=-0.090585
+[LightGBM] [Info] Start training from score -0.090585
+[LightGBM] [Info] Number of positive: 1857, number of negative: 2142
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000360 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5124
+[LightGBM] [Info] Number of data points in the train set: 3999, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.464366 -> initscore=-0.142778
+[LightGBM] [Info] Start training from score -0.142778
+[LightGBM] [Info] Number of positive: 1848, number of negative: 2152
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000345 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5098
+[LightGBM] [Info] Number of data points in the train set: 4000, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.462000 -> initscore=-0.152294
+[LightGBM] [Info] Start training from score -0.152294
+Model: ensemble
+Threshold: 0.8
+=== Selection Statistics ===
+Total selected instances: 1515
+The ratio valid test cases: 0.69
+============================
+Calculating coverage and mutation score using filtered test cases...
+The total number of tests for mutation testing: 1046
+running mutation testing...
+Final Mutation Testing Results:
+Total mutants: 8900
+Killed mutants: 6618
+Survived mutants: 2076
+Timeout mutants: 206
+Suspicious mutants: 0
+Overall Mutation Score: 74.36%
+{'ensemble': {'coverage': 0.958, 'total_selected': 1515, 'valid_test_case_ration': 0.69}}
+Saving filtered functions to filtered_testcases/LeetCode_llama3.pkl...
