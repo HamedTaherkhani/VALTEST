@@ -60,13 +60,31 @@ def find_mut_score(log:str):
     return None
 
 
+def perform_overall_mutation_testing(functions_with_tests, chunk_size=10):
+    separated_functions = [functions_with_tests[i:i + chunk_size] for i in range(0, len(functions_with_tests), chunk_size)]
+    total_mutants = total_killed = total_survived = total_timeout = total_suspicious = 0
+
+    for function in tqdm(separated_functions):
+        mutants, killed, survived, timeout, suspicious = perform_mutation_testing_for_functions(function)
+        total_mutants += mutants
+        total_killed += killed
+        total_survived += survived
+        total_timeout += timeout
+        total_suspicious += suspicious
+
+    if total_mutants == 0:
+        overall_mutation_score = 0.0
+    else:
+        overall_mutation_score = (total_killed / total_mutants) * 100
+    print("Final Mutation Testing Results:")
+    print(f"Total mutants: {total_mutants}")
+    print(f"Killed mutants: {total_killed}")
+    print(f"Survived mutants: {total_survived}")
+    print(f"Timeout mutants: {total_timeout}")
+    print(f"Suspicious mutants: {total_suspicious}")
+    print(f"Overall Mutation Score: {overall_mutation_score:.2f}%")
+
 def perform_mutation_testing_for_functions(functions_with_tests):
-    import os
-    import tempfile
-    import subprocess
-    import sys
-    import shutil
-    import re
     # Create a temporary directory for the project
     # temp_dir = tempfile.mkdtemp()
     cwd = os.getcwd()
@@ -146,30 +164,88 @@ def perform_mutation_testing_for_functions(functions_with_tests):
         os.chdir(temp_dir)
 
         # Run pytest to check tests, but proceed even if tests fail
-        print("Running pytest to check tests...")
+        # print("Running pytest to check tests...")
         pytest_result = subprocess.run([sys.executable, '-m', 'pytest' ,'-x', '--assert=plain'], capture_output=True, text=True, cwd=temp_dir)
         if pytest_result.returncode != 0:
             print("Tests failed. Output:")
-            print(pytest_result.stdout)
-            print(pytest_result.stderr)
+            # print(pytest_result.stdout)
+            # print(pytest_result.stderr)
             print("Proceeding with mutation testing despite test failures.\n")
         else:
-            print("All tests passed.\n")
-        mutmut_run = subprocess.run(f'mutmut run --paths-to-mutate=src/',
-                                    capture_output=True, text=True, cwd=temp_dir, shell=True)
-        result = mutmut_run.stdout
-        # print(result)
-        scores = find_mut_score(result)
+            pass
+            # print("All tests passed.\n")
 
+        total_mutants = 0
+        total_killed = 0
+        total_timeout = 0
+        total_suspicious = 0
+        total_survived = 0
+        # print(function_modules)
+        # Run mutation testing for each function
+        for module_name, test_cases in function_modules:
+            # print(f"Running mutmut mutation testing for function '{module_name[0]}'...")
+            # Clean mutmut cache before each run
+            # subprocess.run(['mutmut', 'clean'], capture_output=True, text=True)
+            # Run mutmut for the specific module
+            # print(f'module_name is {module_name[0]}')
+            try:
+                mutmut_run = subprocess.run(f'mutmut run --paths-to-mutate=src/{module_name[0]}.py',
+                                            capture_output=True, text=True, cwd=temp_dir, shell=True, timeout=60)
+                # mutmut_run = subprocess.run([
+                #     'mutmut', 'run', '--rerun-all',
+                #     f'--paths-to-mutate=src/{module_name}.py',
+                # ], capture_output=True, text=True, timeout=10, cwd=temp_dir)
+            except subprocess.TimeoutExpired as e:
+                subprocess.run('rm -f .mutmut-cache', cwd=temp_dir, shell=True)
+                # print('timeout for subprocess running mutmut mutation test')
+                continue
+            # Show mutants using the API
+            # module_file_path = os.path.join('src', f'{module_name}.py')
+            # show_mutants_using_api(module_file_path)
+            result = mutmut_run.stdout
+            # print(result)
+            # print(mutmut_run.stderr)
+            # Parse the results
+            scores = find_mut_score(result)
+            if scores is None:
+                subprocess.run('rm -f .mutmut-cache', cwd=temp_dir, shell=True)
+                # print('********************************')
+                continue
+            mutant_ids = [str(i + 1) for i in range(scores.get_total_mutations())]
+            num_mutants = scores.total
+            num_killed = scores.killed
+            num_timeout = scores.timeout
+            num_suspicious = scores.suspicious
+            num_survived = scores.survived
+            mutation_score = scores.get_mutation_score()
+            # Update totals
+            total_mutants += num_mutants
+            total_killed += num_killed
+            total_timeout += num_timeout
+            total_suspicious += num_suspicious
+            total_survived += num_survived
+            subprocess.run('rm -f .mutmut-cache', cwd=temp_dir, shell=True)
+        # Compute overall mutation score
+        if total_mutants == 0:
+            overall_mutation_score = 0.0
+        else:
+            overall_mutation_score = (total_killed / total_mutants) * 100
+        # print("Final Mutation Testing Results:")
+        # print(f"Total mutants: {total_mutants}")
+        # print(f"Killed mutants: {total_killed}")
+        # print(f"Survived mutants: {total_survived}")
+        # print(f"Timeout mutants: {total_timeout}")
+        # print(f"Suspicious mutants: {total_suspicious}")
+        # print(f"Overall Mutation Score: {overall_mutation_score:.2f}%")
         subprocess.run('rm -f .mutmut-cache', cwd=temp_dir, shell=True)
 
-        print("Final Mutation Testing Results:")
-        print(f"Total mutants: {scores.total}")
-        print(f"Killed mutants: {scores.killed}")
-        print(f"Survived mutants: {scores.survived}")
-        print(f"Timeout mutants: {scores.timeout}")
-        print(f"Suspicious mutants: {scores.suspicious}")
-        print(f"Overall Mutation Score: {scores.get_mutation_score():.2f}%")
+        # mutmut_run = subprocess.run(f'mutmut run --paths-to-mutate=src/',
+        #                             capture_output=True, text=True, cwd=temp_dir, shell=True)
+        # result = mutmut_run.stdout
+        # # print(result)
+        # scores = find_mut_score(result)
+        #
+        # subprocess.run('rm -f .mutmut-cache', cwd=temp_dir, shell=True)
     finally:
         # sys.exit()
         # pass
@@ -177,7 +253,7 @@ def perform_mutation_testing_for_functions(functions_with_tests):
         os.chdir(cwd)
         # # # Clean up temporary directory
         shutil.rmtree(temp_dir)
-
+    return total_mutants, total_killed, total_survived, total_timeout, total_suspicious
 
 def get_top_level_function_names(func_str):
     # Regular expression to match top-level function definitions (without leading indentation)

@@ -10,25 +10,26 @@ from typing import List
 import os
 from dotenv import load_dotenv
 from function_executor import run_test_cases
+from tqdm import tqdm
 load_dotenv()
 
 
-def curate_testcases(dataset, llm, threshold=0.8):
+def curate_testcases(dataset, llm, threshold=0.85):
     with open(f'filtered_testcases/{dataset}_{llm}.pkl', 'rb') as f:
         functions: List[Function] = pickle.load(f)
-    total_predicted_1 = 0
-    total_predicted_0 = 0
+    total_valid = 0
+    total_invalid = 0
     below_threshold = 0
     for f in functions:
         for testcase in f.testcases:
-            if testcase.prediction_is_valid == 1:
-                total_predicted_1 += 1
-            elif testcase.prediction_is_valid == 0:
-                total_predicted_0 += 1
+            if testcase.is_valid == 1:
+                total_valid += 1
+            elif testcase.is_valid == 0:
+                total_invalid += 1
             if testcase.prediction_y_prob < threshold:
                 below_threshold += 1
-    print(total_predicted_1)
-    print(total_predicted_0)
+    print(total_valid)
+    print(total_invalid)
     print(f'below_threshold : {below_threshold}')
 
     client = OpenAI(api_key=os.getenv('openai_key'))
@@ -76,10 +77,10 @@ Test Case:
             validated_assertion = reply[start_idx + 3:end_idx].strip()
             # Store the validated assertion in the test case
             testcase.validated_text = validated_assertion
-            # print('------------------------')
-            # print(testcase.text)
-            # print(testcase.validated_text)
-            # print('*************************')
+            print('------------------------')
+            print(testcase.text)
+            print(testcase.validated_text)
+            print('*************************')
         else:
             print("Closing *** not found in GPT-4 response.")
     else:
@@ -95,25 +96,28 @@ def validate_test_cases_concurrently(functions, threshold, client, llm):
                     # Submit the processing of each test case to the thread pool
                     futures.append(executor.submit(process_testcase, f, testcase, client, llm))
         # Wait for all threads to complete
-        for future in futures:
+        for future in tqdm(futures):
             future.result()
 
-    testcases = []
     for f in functions:
+        testcases = []
         for index, testcase in enumerate(f.testcases):
             try:
                 if testcase.validated_text is not None:
                     if testcase.text.replace(' ', '').replace('\n', '') != testcase.validated_text.replace(' ', '').replace('\n', ''):
-                        print(testcase.text)
+                        # print(testcase.text)
                         testcase.text = testcase.validated_text
-                        print(testcase.validated_text)
-                        print('----------------------------')
+                        # print(testcase.validated_text)
+                        # print('----------------------------')
             except Exception as e:
                 pass
             testcases.append(testcase.text)
         is_passed_list = run_test_cases(f.solution, testcases, timeout=5)
         for index, testcase in enumerate(f.testcases):
-            testcase.is_valid = is_passed_list[index]
+            if is_passed_list[index]:
+                testcase.is_valid = 1
+            else:
+                testcase.is_valid = 0
 
     return functions
 

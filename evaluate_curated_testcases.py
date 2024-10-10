@@ -16,6 +16,13 @@ from function_executor import run_test_cases
 def evaluate_curated_testcases(dataset, llm):
     with open(f'curated_testcases/{dataset}_{llm}.pkl', 'rb') as f:
         functions: List[Function] = pickle.load(f)
+
+    valid_tests = sum(1 for fun in functions for te in fun.testcases if te.is_valid == 1)
+    invalid_tests = sum(1 for fun in functions for te in fun.testcases if te.is_valid != 1)
+    print(f'valid tests: {valid_tests}')
+    print(f'invalid tests: {invalid_tests}')
+    print(f'valid ratio: {valid_tests / (valid_tests + invalid_tests)}')
+
     evaluate_function(functions, do_mutation=True)
 
 if __name__ == '__main__':

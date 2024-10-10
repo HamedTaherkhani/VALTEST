@@ -30,7 +30,7 @@ from scikeras.wrappers import KerasClassifier
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 # from tensorflow.python.keras.layers import Dense, Dropout
-from mutation_testing import perform_mutation_testing_for_functions, get_top_level_function_names
+from mutation_testing import perform_overall_mutation_testing, get_top_level_function_names
 from functools import partial
 import matplotlib.pyplot as plt
 import warnings
@@ -369,7 +369,7 @@ def perform_mutation_testing(functions: List[Function]):
     # print(f'Mutation scores per operator:{mutation_scores_per_operator}.3f')
 
     ## perform mutmut mutation testing
-    perform_mutation_testing_for_functions(functions_tests)
+    perform_overall_mutation_testing(functions_tests)
 
 
 def downsample_tests(tests):
