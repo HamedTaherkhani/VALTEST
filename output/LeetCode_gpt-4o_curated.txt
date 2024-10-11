@@ -1,0 +1,12 @@
+valid tests: 7719
+invalid tests: 1328
+valid ratio: 0.8532110091743119
+The total number of tests for mutation testing: 7719
+running mutation testing...
+Final Mutation Testing Results:
+Total mutants: 8427
+Killed mutants: 7365
+Survived mutants: 880
+Timeout mutants: 177
+Suspicious mutants: 5
+Overall Mutation Score: 87.40%
