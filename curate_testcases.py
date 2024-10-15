@@ -10,6 +10,7 @@ from typing import List
 import os
 from dotenv import load_dotenv
 from function_executor import run_test_cases
+import ast
 from tqdm import tqdm
 load_dotenv()
 
@@ -76,11 +77,14 @@ Test Case:
         if end_idx != -1:
             validated_assertion = reply[start_idx + 3:end_idx].strip()
             # Store the validated assertion in the test case
-            testcase.validated_text = validated_assertion
-            print('------------------------')
-            print(testcase.text)
-            print(testcase.validated_text)
-            print('*************************')
+            try:
+                if ast.parse(validated_assertion):
+                    testcase.validated_text = validated_assertion
+                    print('------------------------')
+                    print(testcase.text)
+                    print(testcase.validated_text)
+            except Exception as e:
+                pass
         else:
             print("Closing *** not found in GPT-4 response.")
     else:

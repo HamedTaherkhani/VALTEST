@@ -512,7 +512,7 @@ def remove_unnecessary_functions(functions):
     return functions
 
 # Main function tying everything together
-def main(dataset: str, llm: str, mutation:bool=False):
+def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5):
     # Extract features
     print('Extracting testcases and running them...')
     functions = get_all_tests(dataset, llm)
@@ -566,7 +566,7 @@ def main(dataset: str, llm: str, mutation:bool=False):
 
     print(f"\nTraining and evaluating model: {model_name}")
     selected_ids_per_group, total_selected, ratio, all_y_prob_with_groups = train_and_evaluate(X_balanced, y_balanced, groups_balanced,
-                                                                       model_name)
+                                                                       model_name, threshold, topN)
     # print(selected_ids_per_group)
     temp = copy.deepcopy(functions)
     for group, ids in selected_ids_per_group.items():
@@ -627,10 +627,27 @@ if __name__ == "__main__":
         help=f"Specify if mutation should be performed or not. Its takes a lot of time to do mutation, so be careful. Choices are: {0, 1}.",
         choices=[0, 1]
     )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.8,
+        help=f"Specify the threshold for filtering out the test cases. Choices are: {0.5, 0.65, 0.8, 0.85, 0.9}.",
+        choices=[0.5, 0.65, 0.8, 0.85, 0.9],
+        required=False
+    )
+    parser.add_argument(
+        "--topN",
+        type=int,
+        default=5,
+        choices=[1, 3, 5, 7],
+        help=f"Specify the top N test cases. Choices are: {1, 3, 5, 7}.",
+    )
+
     args = parser.parse_args()
     file_name = f'output/{args.dataset}_{args.llm}.txt'
+    # file_name = f'output/RQ2/{args.dataset}_{args.llm}_{args.threshold}_{args.topN}.txt'
     print(f'Writing the output to {file_name}')
     with open(file_name, 'w') as f:
         orig_stdout = sys.stdout
         sys.stdout = f
-        main(args.dataset, args.llm, args.mutation)
+        main(args.dataset, args.llm, args.mutation, args.threshold, args.topN)

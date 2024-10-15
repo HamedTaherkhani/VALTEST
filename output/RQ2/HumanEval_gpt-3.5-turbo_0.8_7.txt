@@ -1,0 +1,66 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/HumanEval_gpt-3.5-turbo_processed.pkl...
+159
+159
+{'input_mean': 99.31333333333335, 'input_max': 100.0, 'input_min': 97.31, 'input_sum': 1191.7600000000002, 'input_total': 12, 'input_variance': 0.9244388888888863, 'output_mean': 99.99, 'output_max': 99.99, 'output_min': 99.99, 'output_sum': 99.99, 'output_total': 1, 'output_variance': 0.0, 'second_output_mean': 0.01, 'second_output_max': 0.01, 'second_output_min': 0.01, 'second_output_sum': 0.01, 'second_output_total': 1, 'second_output_variance': 0.0, 'second_input_mean': 0.4874999999999999, 'second_input_max': 2.11, 'second_input_min': 0.0, 'second_input_sum': 5.849999999999999, 'second_input_total': 12, 'second_input_variance': 0.4732520833333333, 'is_valid': 1, 'function_id': 0}
+Sample feature: {'input_mean': 99.31333333333335, 'input_max': 100.0, 'input_min': 97.31, 'input_sum': 1191.7600000000002, 'input_total': 12, 'input_variance': 0.9244388888888863, 'output_mean': 99.99, 'output_max': 99.99, 'output_min': 99.99, 'output_sum': 99.99, 'output_total': 1, 'output_variance': 0.0, 'second_output_mean': 0.01, 'second_output_max': 0.01, 'second_output_min': 0.01, 'second_output_sum': 0.01, 'second_output_total': 1, 'second_output_variance': 0.0, 'second_input_mean': 0.4874999999999999, 'second_input_max': 2.11, 'second_input_min': 0.0, 'second_input_sum': 5.849999999999999, 'second_input_total': 12, 'second_input_variance': 0.4732520833333333, 'is_valid': 1, 'function_id': 0}
+77.48629386252463    97.00089027346154    8.31037834148663    2.269282279407881
+75.03714648550748   83.87841938937906    8.700602938498319    8.905510699330996
+Balanced dataset size - Number of valid testcases: 1991
+Balanced dataset size - Number of invalid testcases: 697
+Valid Testcase Ratio" 0.74
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 1565, number of negative: 585
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000243 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5070
+[LightGBM] [Info] Number of data points in the train set: 2150, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.727907 -> initscore=0.984029
+[LightGBM] [Info] Start training from score 0.984029
+[LightGBM] [Info] Number of positive: 1543, number of negative: 608
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000232 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5082
+[LightGBM] [Info] Number of data points in the train set: 2151, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.717341 -> initscore=0.931309
+[LightGBM] [Info] Start training from score 0.931309
+[LightGBM] [Info] Number of positive: 1602, number of negative: 549
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000228 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5055
+[LightGBM] [Info] Number of data points in the train set: 2151, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.744770 -> initscore=1.070910
+[LightGBM] [Info] Start training from score 1.070910
+[LightGBM] [Info] Number of positive: 1640, number of negative: 510
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000217 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5091
+[LightGBM] [Info] Number of data points in the train set: 2150, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.762791 -> initscore=1.168041
+[LightGBM] [Info] Start training from score 1.168041
+[LightGBM] [Info] Number of positive: 1614, number of negative: 536
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000218 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 5055
+[LightGBM] [Info] Number of data points in the train set: 2150, number of used features: 24
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.750698 -> initscore=1.102337
+[LightGBM] [Info] Start training from score 1.102337
+Model: ensemble
+Threshold: 0.8
+=== Selection Statistics ===
+Total selected instances: 1603
+The ratio valid test cases: 0.867
+============================
+Calculating coverage and mutation score using filtered test cases...
+The total number of tests for mutation testing: 1390
+running mutation testing...
+Final Mutation Testing Results:
+Total mutants: 1639
+Killed mutants: 1335
+Survived mutants: 292
+Timeout mutants: 11
+Suspicious mutants: 1
+Overall Mutation Score: 81.45%
+{'ensemble': {'coverage': 0.964, 'total_selected': 1603, 'valid_test_case_ration': 0.867}}
+Saving filtered functions to filtered_testcases/HumanEval_gpt-3.5-turbo.pkl...

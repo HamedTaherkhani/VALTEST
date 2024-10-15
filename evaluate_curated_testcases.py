@@ -22,8 +22,8 @@ def evaluate_curated_testcases(dataset, llm):
     print(f'valid tests: {valid_tests}')
     print(f'invalid tests: {invalid_tests}')
     print(f'valid ratio: {valid_tests / (valid_tests + invalid_tests)}')
-
-    evaluate_function(functions, do_mutation=True)
+    coverage = evaluate_function(functions, do_mutation=True)
+    print(f'coverage: {coverage}')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run testcase curation with specified dataset and LLM.")
