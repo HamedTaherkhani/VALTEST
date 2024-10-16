@@ -1,0 +1,51 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/HumanEval_llama3_processed.pkl...
+122
+119
+{'output_mean': 99.95, 'output_max': 99.95, 'output_min': 99.95, 'output_sum': 99.95, 'output_total': 1, 'output_variance': 0.0, 'second_output_mean': 0.03, 'second_output_max': 0.03, 'second_output_min': 0.03, 'second_output_sum': 0.03, 'second_output_total': 1, 'second_output_variance': 0.0, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 1545
+Balanced dataset size - Number of invalid testcases: 914
+Valid Testcase Ratio" 0.63
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 1286, number of negative: 681
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000157 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2362
+[LightGBM] [Info] Number of data points in the train set: 1967, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.653787 -> initscore=0.635730
+[LightGBM] [Info] Start training from score 0.635730
+[LightGBM] [Info] Number of positive: 1164, number of negative: 803
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000134 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2455
+[LightGBM] [Info] Number of data points in the train set: 1967, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.591764 -> initscore=0.371263
+[LightGBM] [Info] Start training from score 0.371263
+[LightGBM] [Info] Number of positive: 1221, number of negative: 746
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000155 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2429
+[LightGBM] [Info] Number of data points in the train set: 1967, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.620742 -> initscore=0.492700
+[LightGBM] [Info] Start training from score 0.492700
+[LightGBM] [Info] Number of positive: 1241, number of negative: 726
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000151 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2455
+[LightGBM] [Info] Number of data points in the train set: 1967, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.630910 -> initscore=0.536123
+[LightGBM] [Info] Start training from score 0.536123
+[LightGBM] [Info] Number of positive: 1268, number of negative: 700
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000145 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2449
+[LightGBM] [Info] Number of data points in the train set: 1968, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.644309 -> initscore=0.594116
+[LightGBM] [Info] Start training from score 0.594116
+Model: ensemble
+Threshold: 0.8
+=== Selection Statistics ===
+Total selected instances: 586
+The ratio valid test cases: 0.693
+============================
