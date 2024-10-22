@@ -126,21 +126,33 @@ class ModelFactory:
 
 
 # Function to extract features from TestCases
-def extract_features(test_cases: List[TestCase], function_ids: List[int], strategy: FeatureExtractionStrategy) -> List[dict]:
+def extract_features(test_cases: List[TestCase], function_ids: List[int], strategy: FeatureExtractionStrategy,
+                     feature_sets: str = 'all') -> List[dict]:
     features = []
+
     for test_case, func_id in zip(test_cases, function_ids):
         # Extract input features and add a prefix to each key
         input_features = {f'input_{k}': v for k, v in strategy.extract_features(test_case.input_logprobs).items()}
+        second_input_features = {f'second_input_{k}': v for k, v in
+                                 strategy.extract_features(test_case.second_input_logprobs).items()}
 
         # Extract output features and add a prefix to each key
-        output_features = {f'output_{k}': v for k, v in strategy.extract_features(
-            test_case.output_logprobs).items()}
+        output_features = {f'output_{k}': v for k, v in strategy.extract_features(test_case.output_logprobs).items()}
+        second_output_features = {f'second_output_{k}': v for k, v in
+                                  strategy.extract_features(test_case.second_output_logprobs).items()}
 
-        second_input_features = {f'second_input_{k}': v for k, v in strategy.extract_features(test_case.second_input_logprobs).items()}
-        second_output_features = {f'second_output_{k}': v for k, v in strategy.extract_features(
-            test_case.second_output_logprobs).items()}
-        # Combine input and output features with is_valid flag and function_id
-        combined_features = {**input_features, **output_features, **second_output_features, **second_input_features, 'is_valid': test_case.is_valid, 'function_id': func_id}
+        # Based on feature_sets argument, combine relevant features
+        if feature_sets == 'input':
+            combined_features = {**input_features, **second_input_features}
+        elif feature_sets == 'output':
+            combined_features = {**output_features, **second_output_features}
+        else:  # 'all'
+            combined_features = {**input_features, **output_features, **second_input_features, **second_output_features}
+
+        # Add 'is_valid' and 'function_id' to the feature set
+        combined_features['is_valid'] = test_case.is_valid
+        combined_features['function_id'] = func_id
+
         features.append(combined_features)
 
     return features
@@ -306,29 +318,22 @@ def train_and_evaluate(
 
 
 def balance_data(X, y, groups):
-    # Combine X, y, and groups into a single DataFrame
     df = X.copy()
     df['is_valid'] = y
     df['function_id'] = groups
 
-    # Separate the classes
     valid_cases = df[df['is_valid'] == 1]
     invalid_cases = df[df['is_valid'] == 0]
 
-    # Determine the smaller class size
     min_size = min(len(valid_cases), len(invalid_cases))
 
-    # Undersample the larger class to match the smaller class size
     valid_cases_resampled = resample(valid_cases, replace=False, n_samples=min_size, random_state=42)
     invalid_cases_resampled = resample(invalid_cases, replace=False, n_samples=min_size, random_state=42)
 
-    # Combine the resampled data
     balanced_df = pd.concat([valid_cases_resampled, invalid_cases_resampled])
 
-    # Shuffle the data to avoid ordering bias
     balanced_df = balanced_df.sample(frac=1, random_state=42).reset_index(drop=True)
 
-    # Split the balanced data back into features, target, and groups
     X_balanced = balanced_df.drop(columns=['is_valid', 'function_id'])
     y_balanced = balanced_df['is_valid']
     groups_balanced = balanced_df['function_id']
@@ -480,10 +485,8 @@ def visualize_features(features):
     plt.xlabel('Values')
     plt.ylabel('Density')
 
-    # Show legend
     plt.legend()
 
-    # Display the plot
     plt.show()
 
 def remove_unnecessary_functions(functions):
@@ -511,9 +514,7 @@ def remove_unnecessary_functions(functions):
     print(len(functions))
     return functions
 
-# Main function tying everything together
-def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5):
-    # Extract features
+def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, feature_sets='all'):
     print('Extracting testcases and running them...')
     functions = get_all_tests(dataset, llm)
 
@@ -531,13 +532,9 @@ def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5):
 
     strategy = StatisticalFeatureExtraction()
     # print(all_testcases)
-    # Modify extract_features to also handle test_case_ids if necessary
-    features = extract_features(all_testcases, function_ids, strategy)  # Pass function_ids
+    features = extract_features(all_testcases, function_ids, strategy, feature_sets)
     print(features[0])
-    visualize_features(features)
-
-    # return
-    # Prepare data
+    # visualize_features(features)
     X, y, groups = prepare_data(features)  # Now returns groups
 
     # Ensure that the order of test_case_ids aligns with X, y, groups
@@ -625,7 +622,8 @@ if __name__ == "__main__":
         type=int,
         default=0,
         help=f"Specify if mutation should be performed or not. Its takes a lot of time to do mutation, so be careful. Choices are: {0, 1}.",
-        choices=[0, 1]
+        choices=[0, 1],
+        required=False
     )
     parser.add_argument(
         "--threshold",
@@ -641,13 +639,22 @@ if __name__ == "__main__":
         default=5,
         choices=[1, 3, 5, 7],
         help=f"Specify the top N test cases. Choices are: {1, 3, 5, 7}.",
+        required=False
     )
-
+    parser.add_argument(
+        "--features",
+        type=str,
+        default=['all'],
+        choices=['all', 'input', 'output'],
+        help=f"Specify the feature sets to use. Choices are: {'all', 'input', 'output'}.",
+        required=False
+    )
     args = parser.parse_args()
     file_name = f'output/{args.dataset}_{args.llm}.txt'
     # file_name = f'output/RQ2/{args.dataset}_{args.llm}_{args.threshold}_{args.topN}.txt'
+    # file_name = f'output/RQ3/{args.dataset}_{args.llm}_{args.features}.txt'
     print(f'Writing the output to {file_name}')
     with open(file_name, 'w') as f:
         orig_stdout = sys.stdout
         sys.stdout = f
-        main(args.dataset, args.llm, args.mutation, args.threshold, args.topN)
+        main(args.dataset, args.llm, args.mutation, args.threshold, args.topN, args.features)
