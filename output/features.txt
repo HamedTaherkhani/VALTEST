@@ -1,0 +1,135 @@
+Features for MBPP and gpt-4o for valid instances:
+input_mean average: 75.6
+output_mean average: 98.3
+second_input_mean average: 10.6
+second_output_mean average: 1.0
+Features for MBPP and gpt-4o for invalid instances:
+input_mean average: 74.8
+output_mean average: 89.9
+second_input_mean average: 10.7
+second_output_mean average: 4.8
+mann whitney u test for input_mean: statistics: 6370737.0 p-value:0.06136272417654736
+mann whitney u test for output_mean: statistics: 8684336.5 p-value:3.383845784376359e-201
+mann whitney u test for second_input_mean: statistics: 6122664.0 p-value:0.36607946555219706
+mann whitney u test for second_output_mean: statistics: 3793394.0 p-value:4.678956572165429e-195
+--------------------------------------------------------------------------------
+Features for MBPP and gpt-3.5-turbo for valid instances:
+input_mean average: 77.5
+output_mean average: 97.1
+second_input_mean average: 9.9
+second_output_mean average: 2.0
+Features for MBPP and gpt-3.5-turbo for invalid instances:
+input_mean average: 79.3
+output_mean average: 86.1
+second_input_mean average: 8.4
+second_output_mean average: 6.3
+mann whitney u test for input_mean: statistics: 3885892.5 p-value:6.410853729686079e-07
+mann whitney u test for output_mean: statistics: 6149876.5 p-value:6.602346074013945e-202
+mann whitney u test for second_input_mean: statistics: 4681078.0 p-value:1.837430478376711e-13
+mann whitney u test for second_output_mean: statistics: 2353698.0 p-value:6.877912241009749e-187
+--------------------------------------------------------------------------------
+Features for MBPP and llama3 for valid instances:
+input_mean average: 79.5
+output_mean average: 95.7
+second_input_mean average: 9.5
+second_output_mean average: 3.0
+Features for MBPP and llama3 for invalid instances:
+input_mean average: 81.6
+output_mean average: 86.5
+second_input_mean average: 8.2
+second_output_mean average: 6.7
+mann whitney u test for input_mean: statistics: 2277563.5 p-value:3.720779478424055e-06
+mann whitney u test for output_mean: statistics: 3365806.0 p-value:7.491567559029574e-96
+mann whitney u test for second_input_mean: statistics: 2701320.0 p-value:1.5313595688286107e-07
+mann whitney u test for second_output_mean: statistics: 1653864.5 p-value:1.637421931768798e-82
+--------------------------------------------------------------------------------
+Features for HumanEval and gpt-4o for valid instances:
+input_mean average: 73.1
+output_mean average: 98.1
+second_input_mean average: 10.1
+second_output_mean average: 1.3
+Features for HumanEval and gpt-4o for invalid instances:
+input_mean average: 71.3
+output_mean average: 84.3
+second_input_mean average: 9.3
+second_output_mean average: 8.2
+mann whitney u test for input_mean: statistics: 712976.5 p-value:0.18461457549498006
+mann whitney u test for output_mean: statistics: 1102648.0 p-value:1.0280503688267627e-121
+mann whitney u test for second_input_mean: statistics: 722706.5 p-value:0.06604786434708075
+mann whitney u test for second_output_mean: statistics: 289641.5 p-value:8.118330429530796e-114
+--------------------------------------------------------------------------------
+Features for HumanEval and gpt-3.5-turbo for valid instances:
+input_mean average: 77.5
+output_mean average: 97.0
+second_input_mean average: 8.3
+second_output_mean average: 2.3
+Features for HumanEval and gpt-3.5-turbo for invalid instances:
+input_mean average: 75.0
+output_mean average: 83.9
+second_input_mean average: 8.7
+second_output_mean average: 8.9
+mann whitney u test for input_mean: statistics: 754299.5 p-value:0.0006099105267550917
+mann whitney u test for output_mean: statistics: 1126601.0 p-value:1.3416245362686884e-133
+mann whitney u test for second_input_mean: statistics: 643656.5 p-value:0.004411844935201803
+mann whitney u test for second_output_mean: statistics: 271752.5 p-value:3.961259676371704e-128
+--------------------------------------------------------------------------------
+Features for HumanEval and llama3 for valid instances:
+input_mean average: 82.0
+output_mean average: 95.8
+second_input_mean average: 7.1
+second_output_mean average: 2.9
+Features for HumanEval and llama3 for invalid instances:
+input_mean average: 84.3
+output_mean average: 91.4
+second_input_mean average: 6.5
+second_output_mean average: 5.4
+mann whitney u test for input_mean: statistics: 670483.5 p-value:0.03650643070251857
+mann whitney u test for output_mean: statistics: 895803.5 p-value:5.312504408944774e-29
+mann whitney u test for second_input_mean: statistics: 722359.5 p-value:0.33822944780322683
+mann whitney u test for second_output_mean: statistics: 530328.0 p-value:3.178894564215701e-25
+--------------------------------------------------------------------------------
+Features for LeetCode and gpt-4o for valid instances:
+input_mean average: 78.2
+output_mean average: 95.8
+second_input_mean average: 9.7
+second_output_mean average: 2.3
+Features for LeetCode and gpt-4o for invalid instances:
+input_mean average: 74.7
+output_mean average: 73.9
+second_input_mean average: 11.1
+second_output_mean average: 12.0
+mann whitney u test for input_mean: statistics: 8751885.5 p-value:8.850582205592219e-26
+mann whitney u test for output_mean: statistics: 13236826.0 p-value:0.0
+mann whitney u test for second_input_mean: statistics: 6594919.5 p-value:6.845897103521314e-22
+mann whitney u test for second_output_mean: statistics: 2174485.5 p-value:0.0
+--------------------------------------------------------------------------------
+Features for LeetCode and gpt-3.5-turbo for valid instances:
+input_mean average: 83.2
+output_mean average: 94.3
+second_input_mean average: 8.0
+second_output_mean average: 3.0
+Features for LeetCode and gpt-3.5-turbo for invalid instances:
+input_mean average: 79.9
+output_mean average: 75.8
+second_input_mean average: 9.5
+second_output_mean average: 11.3
+mann whitney u test for input_mean: statistics: 9282663.5 p-value:6.0373967357981156e-40
+mann whitney u test for output_mean: statistics: 12778073.5 p-value:0.0
+mann whitney u test for second_input_mean: statistics: 6567629.0 p-value:6.89604883777794e-38
+mann whitney u test for second_output_mean: statistics: 3108580.5 p-value:0.0
+--------------------------------------------------------------------------------
+Features for LeetCode and llama3 for valid instances:
+input_mean average: 83.4
+output_mean average: 88.1
+second_input_mean average: 7.4
+second_output_mean average: 2.8
+Features for LeetCode and llama3 for invalid instances:
+input_mean average: 84.0
+output_mean average: 89.9
+second_input_mean average: 7.1
+second_output_mean average: 5.1
+mann whitney u test for input_mean: statistics: 2992008.5 p-value:0.02415426051895571
+mann whitney u test for output_mean: statistics: 3280302.5 p-value:0.00063023283252208
+mann whitney u test for second_input_mean: statistics: 3284868.0 p-value:0.00046344895802992686
+mann whitney u test for second_output_mean: statistics: 2540797.5 p-value:3.6764325327810005e-29
+--------------------------------------------------------------------------------
