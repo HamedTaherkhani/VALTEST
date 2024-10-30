@@ -209,14 +209,14 @@ def categorize_invalid_tests(functions: List['Function'], client, model="o1-prev
     def process_function(function):
         # Build the prompt
         prompt = prompt1  # Ensure 'prompt1' is defined
-        invalid_tests = [tc.text for tc in function.testcases if not tc.is_valid]
+        invalid_tests = [tc for tc in function.testcases if not tc.is_valid]
         if len(invalid_tests) == 0:
             return None
         prompt += '\n' + "function description:" + '\n' + function.prompt + '\n' + 'generated tests:\n'
         for invalid_test in invalid_tests:
-            prompt += invalid_test + ' \n'
+            prompt += invalid_test.text + ' \n'
             try:
-                actual_output, expected_output = run_function_from_assertion(function.solution, invalid_test)
+                actual_output, expected_output = run_function_from_assertion(function.solution, invalid_test.text)
             except Exception as e:
                 continue
             prompt += f'\nBy running the test cases, we can see that the actual output is: {actual_output} but the expected output is: {expected_output}\n'
@@ -246,9 +246,10 @@ def categorize_invalid_tests(functions: List['Function'], client, model="o1-prev
             # Assign the mapped category for each test case based on the response
             category = mapped_categories[idx] if idx < len(mapped_categories) else Category(-1, "Unknown", "Could not map to any category")
             function_result['test_case_results'].append({
-                'test_case_text': gg,
+                'test_case_text': gg.text,
                 'category_index': category.index,
                 'category_name': category.name,
+                'predicted': gg.prediction_is_valid
             })
         return function_result
 
@@ -297,5 +298,5 @@ if __name__ == '__main__':
         print(f"  {category_name}: {count}")
 
     # Save the entire results into a pickle file
-    with open('categorized_results.pkl', 'wb') as f:
+    with open('output/categorized_results.pkl', 'wb') as f:
         pickle.dump(categorized_results, f)
