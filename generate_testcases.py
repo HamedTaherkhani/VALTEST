@@ -14,6 +14,7 @@ from leetcode_loader import LeetCodeLoader
 from llm_requester import OpenaiRequester, HuggingfaceRequester
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from ds1000_loader import DS1000Loader
+from BigCodeLoader import BigCodeLoader
 from prompts import PY_TEST_GENERATION_FEW_SHOT_DS1000, PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, PY_TEST_GENERATION_CHAT_INSTRUCTION_DS1000
 # Define an abstract base class for LLM requesters
 
@@ -96,14 +97,21 @@ def generate_testcases(dataset_choice, llm_name):
         solutions = leetcode.get_solutions()
         dataset = zip(prompts, solutions)
         dataset_name = 'LeetCode'
-    elif dataset_choice == 3:
-        ds = DS1000Loader()
-        prompts = ds.get_prompts()
-        solutions = ds.get_solutions()
-        dataset = zip(prompts, solutions)
-        dataset_name = 'DS1000'
-        few_shot = PY_TEST_GENERATION_FEW_SHOT_DS1000
-        instruction = PY_TEST_GENERATION_CHAT_INSTRUCTION_DS1000
+    # elif dataset_choice == 3:
+    #     ds = DS1000Loader()
+    #     prompts = ds.get_prompts()
+    #     solutions = ds.get_solutions()
+    #     dataset = zip(prompts, solutions)
+    #     dataset_name = 'DS1000'
+    #     few_shot = PY_TEST_GENERATION_FEW_SHOT_DS1000
+    #     instruction = PY_TEST_GENERATION_CHAT_INSTRUCTION_DS1000
+    # elif dataset_choice == 3:
+    #     bigcode = BigCodeLoader()
+    #     prompts = bigcode.get_prompts()
+    #     solutions = bigcode.get_solutions()
+    #     dataset = zip(prompts, solutions)
+    #     dataset_name = 'BigCodeBench'
+    #     instruction = PY_TEST_GENERATION_CHAT_INSTRUCTION_DS1000
     else:
         print('Not a valid dataset selected.')
         return
@@ -161,8 +169,6 @@ def generate_testcases(dataset_choice, llm_name):
             temperature=0
         )
         # print(API_RESPONSE)
-        # print('-------------------------------------------')
-        # print(API_RESPONSE['text'])
         # print('-------------------------------------------')
         all_tests = parse_tests(API_RESPONSE['text'])
         func_name = get_function_name(solution)

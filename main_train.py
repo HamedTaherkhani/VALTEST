@@ -5,6 +5,8 @@ import copy
 import scipy
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from typing import List, Dict, Any
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -426,15 +428,7 @@ def visualize_features(features):
         print("Sample feature:", features[0])
     else:
         print("No features extracted.")
-    input_sum = 0
-    output_sum = 0
-    second_input_sum = 0
-    second_output_sum = 0
-
-    input_sum_invalid = 0
-    output_sum_invalid = 0
-    second_input_sum_invalid = 0
-    second_output_sum_invalid = 0
+        return
 
     input_mean_valid = []
     input_mean_invalid = []
@@ -443,51 +437,72 @@ def visualize_features(features):
 
     valid = 0
     invalid = 0
-    ##extract features statistics on valid and invalid test cases
+
+    # Extract features statistics for valid and invalid test cases
     for i in features:
         if i['is_valid']:
-            input_sum += i['input_mean']
-            output_sum += i['output_mean']
-            second_input_sum += i['second_input_mean']
-            second_output_sum += i['second_output_mean']
-            input_mean_valid.append(i['input_mean'])
-            output_mean_valid.append(i['output_mean'])
+            input_mean_valid.append(min(i['input_mean'], 100))  # Clip to 100
+            output_mean_valid.append(min(i['output_mean'], 100))  # Clip to 100
             valid += 1
         else:
-            input_sum_invalid += i['input_mean']
-            output_sum_invalid += i['output_mean']
-            second_input_sum_invalid += i['second_input_mean']
-            second_output_sum_invalid += i['second_output_mean']
-            input_mean_invalid.append(i['input_mean'])
-            output_mean_invalid.append(i['output_mean'])
+            input_mean_invalid.append(min(i['input_mean'], 100))  # Clip to 100
+            output_mean_invalid.append(min(i['output_mean'], 100))  # Clip to 100
             invalid += 1
 
-    print(input_sum / valid, '  ', output_sum/ valid, '  ' ,second_input_sum/ valid,'  ', second_output_sum/ valid)
-    print(input_sum_invalid/ invalid, ' ', output_sum_invalid/ invalid, '  ',second_input_sum_invalid/ invalid , '  ', second_output_sum_invalid/ invalid)
+    # Prepare the data for seaborn violin plot
+    data_input = {
+        'Mean': input_mean_valid + input_mean_invalid,
+        'Type': ['Valid'] * len(input_mean_valid) + ['Invalid'] * len(input_mean_invalid)
+    }
 
-    mean_data1 = np.mean(output_mean_valid)
-    mean_data2 = np.mean(output_mean_invalid)
-    counts_data1, bins_data1 = np.histogram(output_mean_valid, bins=50, density=True)
-    counts_data2, bins_data2 = np.histogram(output_mean_invalid, bins=50, density=True)
+    data_output = {
+        'Mean': output_mean_valid + output_mean_invalid,
+        'Type': ['Valid'] * len(output_mean_valid) + ['Invalid'] * len(output_mean_invalid)
+    }
 
-    # Plot the line for Data 1
-    plt.plot(bins_data1[:-1], counts_data1, label='Data 1', color='blue', linestyle='-', marker='o')
+    # Create the violin plot for Input Mean
+    plt.figure(figsize=(10, 6))
+    sns.violinplot(x='Type', y='Mean', data=data_input, inner="quartile", palette="Set2", cut=0)  # cut=0 to prevent extending beyond data
+    plt.ylim(50, 100)  # Set y-axis limit from 50 to 100
 
-    # Plot the line for Data 2
-    plt.plot(bins_data2[:-1], counts_data2, label='Data 2', color='orange', linestyle='-', marker='o')
+    # Calculate and plot 50th (median) and 75th percentiles for Input Mean
+    median_valid_input = np.percentile(input_mean_valid, 50)
+    percentile_75_valid_input = np.percentile(input_mean_valid, 75)
+    median_invalid_input = np.percentile(input_mean_invalid, 50)
+    percentile_75_invalid_input = np.percentile(input_mean_invalid, 75)
 
-    # Add vertical lines for the mean of both datasets
-    plt.axvline(mean_data1, color='blue', linestyle='dashed', linewidth=2, label=f'Mean Data 1: {mean_data1:.2f}')
-    plt.axvline(mean_data2, color='orange', linestyle='dashed', linewidth=2, label=f'Mean Data 2: {mean_data2:.2f}')
+    # Plot percentiles
+    plt.axhline(median_valid_input, color='blue', linestyle='--', label=f'50th Percentile Valid: {median_valid_input:.2f}')
+    plt.axhline(percentile_75_valid_input, color='blue', linestyle='-.', label=f'75th Percentile Valid: {percentile_75_valid_input:.2f}')
+    plt.axhline(median_invalid_input, color='orange', linestyle='--', label=f'50th Percentile Invalid: {median_invalid_input:.2f}')
+    plt.axhline(percentile_75_invalid_input, color='orange', linestyle='-.', label=f'75th Percentile Invalid: {percentile_75_invalid_input:.2f}')
 
-    # Adding title and labels
-    plt.title('Line Plot of Two Data Sets with Means')
-    plt.xlabel('Values')
-    plt.ylabel('Density')
-
+    plt.title('Violin Plot for Input Mean (Valid vs Invalid)')
     plt.legend()
-
     plt.show()
+
+    # Create the violin plot for Output Mean
+    plt.figure(figsize=(10, 6))
+    sns.violinplot(x='Type', y='Mean', data=data_output, inner="quartile", palette="Set2", cut=0)  # cut=0 to prevent extending beyond data
+    plt.ylim(50, 100)  # Set y-axis limit from 50 to 100
+
+    # Calculate and plot 50th (median) and 75th percentiles for Output Mean
+    median_valid_output = np.percentile(output_mean_valid, 50)
+    percentile_75_valid_output = np.percentile(output_mean_valid, 75)
+    median_invalid_output = np.percentile(output_mean_invalid, 50)
+    percentile_75_invalid_output = np.percentile(output_mean_invalid, 75)
+
+    # Plot percentiles
+    plt.axhline(median_valid_output, color='blue', linestyle='--', label=f'50th Percentile Valid: {median_valid_output:.2f}')
+    plt.axhline(percentile_75_valid_output, color='blue', linestyle='-.', label=f'75th Percentile Valid: {percentile_75_valid_output:.2f}')
+    plt.axhline(median_invalid_output, color='orange', linestyle='--', label=f'50th Percentile Invalid: {median_invalid_output:.2f}')
+    plt.axhline(percentile_75_invalid_output, color='orange', linestyle='-.', label=f'75th Percentile Invalid: {percentile_75_invalid_output:.2f}')
+
+    plt.title('Violin Plot for Output Mean (Valid vs Invalid)')
+    plt.legend()
+    plt.show()
+
+    sys.exit()
 
 def remove_unnecessary_functions(functions):
     print(len(functions))
@@ -629,8 +644,8 @@ if __name__ == "__main__":
         "--threshold",
         type=float,
         default=0.8,
-        help=f"Specify the threshold for filtering out the test cases. Choices are: {0.5, 0.65, 0.8, 0.85, 0.9}.",
-        choices=[0.5, 0.65, 0.8, 0.85, 0.9],
+        help=f"Specify the threshold for filtering out the test cases. Choices are: {0.5, 0.65, 0.7, 0.8, 0.85, 0.9}.",
+        choices=[0.5, 0.65, 0.7, 0.8, 0.85, 0.9],
         required=False
     )
     parser.add_argument(
@@ -652,7 +667,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     file_name = f'output/{args.dataset}_{args.llm}.txt'
     # file_name = f'output/RQ2/{args.dataset}_{args.llm}_{args.threshold}_{args.topN}.txt'
-    # file_name = f'output/RQ3/{args.dataset}_{args.llm}_{args.features}.txt'
+    # file_name = f'output/RQ3/second_output/{args.dataset}_{args.llm}_{args.features}.txt'
     print(f'Writing the output to {file_name}')
     with open(file_name, 'w') as f:
         orig_stdout = sys.stdout

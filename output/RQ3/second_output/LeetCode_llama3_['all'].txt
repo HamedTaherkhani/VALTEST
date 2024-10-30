@@ -1,0 +1,54 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/LeetCode_llama3_processed.pkl...
+470
+470
+{'input_mean': 92.88166666666666, 'input_max': 99.6, 'input_min': 86.31, 'input_sum': 557.29, 'input_total': 6, 'input_variance': 24.54998055555555, 'output_mean': 0, 'output_max': 0, 'output_min': 0, 'output_sum': 0, 'output_total': 0, 'output_variance': 0, 'output_entropy': 0, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 2315
+Balanced dataset size - Number of invalid testcases: 2684
+Valid Testcase Ratio" 0.46
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 1819, number of negative: 2180
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000158 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2494
+[LightGBM] [Info] Number of data points in the train set: 3999, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.454864 -> initscore=-0.181038
+[LightGBM] [Info] Start training from score -0.181038
+[LightGBM] [Info] Number of positive: 1827, number of negative: 2172
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000154 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2498
+[LightGBM] [Info] Number of data points in the train set: 3999, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.456864 -> initscore=-0.172973
+[LightGBM] [Info] Start training from score -0.172973
+[LightGBM] [Info] Number of positive: 1909, number of negative: 2090
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000168 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2501
+[LightGBM] [Info] Number of data points in the train set: 3999, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.477369 -> initscore=-0.090585
+[LightGBM] [Info] Start training from score -0.090585
+[LightGBM] [Info] Number of positive: 1857, number of negative: 2142
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000164 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2515
+[LightGBM] [Info] Number of data points in the train set: 3999, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.464366 -> initscore=-0.142778
+[LightGBM] [Info] Start training from score -0.142778
+[LightGBM] [Info] Number of positive: 1848, number of negative: 2152
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000163 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2494
+[LightGBM] [Info] Number of data points in the train set: 4000, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.462000 -> initscore=-0.152294
+[LightGBM] [Info] Start training from score -0.152294
+Model: ensemble
+Threshold: 0.8
+=== Selection Statistics ===
+Total selected instances: 1515
+The ratio valid test cases: 0.697
+============================
+Calculating coverage and mutation score using filtered test cases...
+{'ensemble': {'coverage': 0.96, 'total_selected': 1515, 'valid_test_case_ration': 0.697}}
+Saving filtered functions to filtered_testcases/LeetCode_llama3.pkl...
