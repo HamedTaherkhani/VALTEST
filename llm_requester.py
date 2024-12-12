@@ -6,9 +6,12 @@ load_dotenv()
 # from swebench import generate_test_cases_for_swebench
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import torch
+import vertexai
+from vertexai.generative_models._generative_models import ResponseValidationError
+from vertexai.generative_models import GenerativeModel, ChatSession, GenerationConfig
 # Import necessary libraries for different LLMs
 from abc import ABC, abstractmethod
-
+import google.generativeai as genai
 class LLMRequester(ABC):
     @abstractmethod
     def get_completion(self, messages, **kwargs):
@@ -56,7 +59,68 @@ class OpenaiRequester(LLMRequester):
             'logprobs': tokens_with_logprobs
         }
 
+class VertexAIRequester(LLMRequester):
+    def __init__(self, name):
+        PROJECT_ID = os.getenv('GCP_PROJECT')
+        GCP_LOCATION = os.getenv('GCP_LOCATION')
+        vertexai.init(project=PROJECT_ID, location=GCP_LOCATION)
+        self.config = GenerationConfig(logprobs=5, response_logprobs=True, temperature=0, max_output_tokens=1500)
+        model = GenerativeModel(name)
+        self.chat_session = model.start_chat()
 
+    def get_completion(self, messages, **kwargs):
+        prompt = ''.join([message['content'] for message in messages])
+        try:
+            responses = self.chat_session.send_message(prompt, stream=False, generation_config=self.config)
+        except ResponseValidationError:
+            return {
+                'text': ' ',
+                'logprobs': [],
+            }
+        res = responses.candidates[0].content.parts[0].text
+        tokens_with_logprobs = []
+        for lgp in responses.candidates[0].logprobs_result.top_candidates:
+            tokens_with_logprobs.append((lgp.candidates[0].token, lgp.candidates[0].log_probability, [(l.token, l.log_probability) for l in lgp.candidates[1:]]))
+        return {
+            'text': res,
+            'logprobs': tokens_with_logprobs
+        }
+
+
+class GeminiRequester(LLMRequester):
+    def __init__(self, candidates=5):
+        genai.configure(api_key=os.getenv('gemini_key'))
+        self.client = genai.GenerativeModel("models/gemini-1.5-pro")
+        self.candidates = candidates
+    def get_completion(self, messages, **kwargs):
+        try:
+            prompt = ''.join([message['content'] for message in messages])
+            response = self.client.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    # Only one candidate for now.
+                    candidate_count=self.candidates,
+                    # stop_sequences=["x"],
+                    # max_output_tokens=20,
+                    temperature=0.3,
+                    top_k=8,
+                    # response_logprobs=True,
+                    # logprobs=2
+                ),
+            )
+            candidates = []
+            for idx, candidate in enumerate(response.candidates):
+                a = {
+                    'text': candidate.content.parts[0].text,
+                    'logprobs': []
+                }
+                candidates.append(a)
+            return candidates
+        except Exception as e:
+            return [{
+                'text': '',
+                'logprobs': []
+            }]
 # CodeLlama Requester
 class HuggingfaceRequester(LLMRequester):
     def __init__(self, model_name):

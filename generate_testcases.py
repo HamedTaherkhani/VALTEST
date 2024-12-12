@@ -11,7 +11,8 @@ from typing import List
 from humaneval_loader import HumanEvalLoader
 from MBPPLoader import MBPPLoader
 from leetcode_loader import LeetCodeLoader
-from llm_requester import OpenaiRequester, HuggingfaceRequester
+from llm_requester import OpenaiRequester, HuggingfaceRequester, GeminiRequester, VertexAIRequester
+from livecodebench_loader import LiveCodeBenchLoader
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from ds1000_loader import DS1000Loader
 from BigCodeLoader import BigCodeLoader
@@ -97,6 +98,12 @@ def generate_testcases(dataset_choice, llm_name):
         solutions = leetcode.get_solutions()
         dataset = zip(prompts, solutions)
         dataset_name = 'LeetCode'
+    elif dataset_choice == 3:
+        lvb = LiveCodeBenchLoader()
+        prompts = lvb.get_prompts()
+        solutions = lvb.get_solutions()
+        dataset = zip(prompts, solutions)
+        dataset_name = 'LiveCodeBench'
     # elif dataset_choice == 3:
     #     ds = DS1000Loader()
     #     prompts = ds.get_prompts()
@@ -132,8 +139,10 @@ def generate_testcases(dataset_choice, llm_name):
         llm_requester = HuggingfaceRequester('meta-llama/Meta-Llama-3.1-8B-Instruct')
     elif llm_name == 'magiccoder':
         llm_requester = HuggingfaceRequester('ise-uiuc/Magicoder-S-DS-6.7B')
-    elif llm_name == 'gemini':
-        llm_requester = HuggingfaceRequester('OpenGemini/Gemini-7B')
+    elif llm_name == 'GeminiPro':
+        llm_requester = GeminiRequester()
+    elif llm_name == 'gemini-1.5-flash-002':
+        llm_requester = VertexAIRequester('gemini-1.5-flash-002')
     elif llm_name == 'mistral':
         llm_requester = HuggingfaceRequester('mistralai/Mistral-7B-Instruct-v0.3')
     else:
@@ -154,7 +163,9 @@ def generate_testcases(dataset_choice, llm_name):
             return True
         except Exception:
             return False
-
+    def process_gemini(text):
+        added_text = "import unittest\ntestcase = unittest.TestCase()\n"
+        return added_text + f'testcase.{text}'
     for idx, (prompt, solution) in tqdm(enumerate(list(dataset))):
         content = instruction + few_shot + prompt
         # print(content)
@@ -170,12 +181,15 @@ def generate_testcases(dataset_choice, llm_name):
         )
         # print(API_RESPONSE)
         # print('-------------------------------------------')
+        # print(API_RESPONSE['text'])
+        # print('-------------------------------------------')
         all_tests = parse_tests(API_RESPONSE['text'])
         func_name = get_function_name(solution)
         valid_tests = [test for test in all_tests if is_syntax_valid(test, func_name)]
         testcases.append(valid_tests)
 
         print(valid_tests)
+        print('-----------------------------------------')
         raw_prob = RawLogProbs(prompt=prompt, logprobs=API_RESPONSE['logprobs'], dataset=dataset_name, id=idx, testcases=valid_tests,
                                solution=solution)
         raw_probs.append(raw_prob)

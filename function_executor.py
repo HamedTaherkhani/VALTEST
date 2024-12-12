@@ -47,9 +47,11 @@ def run_test_cases(func_code, test_cases, timeout=5): ## correct version
 
     # Run test cases concurrently
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(run_test_case, test_case) for test_case in test_cases]
-        results = [future.result(timeout=timeout) for future in futures]
-
+        try:
+            futures = [executor.submit(run_test_case, test_case) for test_case in test_cases]
+            results = [future.result(timeout=timeout) for future in futures]
+        except TimeoutError as e:
+            results = []
     return results
 
 

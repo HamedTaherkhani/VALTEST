@@ -46,6 +46,22 @@ class FeatureExtractionStrategy:
     def extract_features(self, log_probs: List[LogProb]) -> dict:
         raise NotImplementedError
 
+import math
+
+def calculate_perplexity(probabilities):
+    # Ensure that all probabilities are greater than zero
+    probabilities = [p for p in probabilities if p > 0]
+    N = len(probabilities)
+    if N == 0:
+        return 0  # Avoid division by zero if the list is empty or all probabilities are zero
+
+    # Calculate the average log probability
+    avg_log_prob = sum(math.log2(p) for p in probabilities) / N
+
+    # Calculate the perplexity
+    perplexity = 2 ** (-avg_log_prob)
+    return perplexity
+
 
 # Concrete Strategy for Statistical Feature Extraction
 class StatisticalFeatureExtraction(FeatureExtractionStrategy):
@@ -55,7 +71,7 @@ class StatisticalFeatureExtraction(FeatureExtractionStrategy):
             return {'mean': 0, 'max': 0, 'min': 0, 'sum': 0, 'total':0,
                     'variance':0,
                     # 'kurtosis':0,
-                    'entropy':0
+                    # 'entropy':0
                     }
         return {
             'mean': np.mean(probs),

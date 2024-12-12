@@ -25,3 +25,5 @@ lmfit
 mutmut
 pytest
 junit-xml==1.9
+google-generativeai
+vertexai==1.71.1
