@@ -29,20 +29,15 @@ class BigCodeLoader:
     def __init__(self,hard=1):
         # ds = load_dataset("bigcode/bigcodebench", split="v0.1.2")
         if hard == 1:
-            ds = list(load_dataset("bigcode/bigcodebench-hard", split="v0.1.2"))
+            ds = load_dataset("bigcode/bigcodebench-hard", split="v0.1.2")
         else:
-            ds = list(load_dataset("bigcode/bigcodebench", split="v0.1.2"))
+            ds = load_dataset("bigcode/bigcodebench", split="v0.1.2")
         self.prompts = []
         self.dataset = ds
         self.solutions = []
         self.libs = []
         self.all_imports = []
-        import random
-        random.seed(42)
-        SAMPLE=10
-        random_samples = random.sample(ds, SAMPLE)
-
-        for item in random_samples:
+        for item in ds:
             # if 'file' in item['complete_prompt']:
             #     continue
             self.prompts.append(item['complete_prompt'])

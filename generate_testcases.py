@@ -219,7 +219,7 @@ def generate_testcases(dataset_choice, llm_name):
     def process_gemini(text):
         added_text = "import unittest\ntestcase = unittest.TestCase()\n"
         return added_text + f'testcase.{text}'
-    for idx, (prompt, solution) in tqdm(enumerate(list(dataset)), total=len(list(dataset))):
+    for idx, (prompt, solution) in tqdm(enumerate(list(dataset))):
         content = instruction + few_shot + prompt
         # print(content)
         API_RESPONSE = llm_requester.get_completion(
