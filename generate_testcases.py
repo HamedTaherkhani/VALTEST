@@ -13,20 +13,23 @@ from MBPPLoader import MBPPLoader
 from leetcode_loader import LeetCodeLoader
 from llm_requester import OpenaiRequester, HuggingfaceRequester, GeminiRequester, VertexAIRequester
 from livecodebench_loader import LiveCodeBenchLoader
+from livecodebench_loader2 import LiveCodeBenchLoader2
+# from BigCodeLoader import BigCodeLoader
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from ds1000_loader import DS1000Loader
 from BigCodeLoader import BigCodeLoader
-from prompts import PY_TEST_GENERATION_FEW_SHOT_DS1000, PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, PY_TEST_GENERATION_CHAT_INSTRUCTION_DS1000
+from prompts import PY_TEST_GENERATION_FEW_SHOT_DS1000, PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, PY_TEST_GENERATION_CHAT_INSTRUCTION_DS1000, PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench
 # Define an abstract base class for LLM requesters
 
 class RawLogProbs:
-    def __init__(self, prompt: str, logprobs: dict, dataset: str, id: str, testcases: List[str], solution: str):
+    def __init__(self, prompt: str, logprobs: dict, dataset: str, id: str, testcases: List[str], solution: str, test_type: int):
         self.prompt = prompt
         self.logprobs = logprobs
         self.dataset = dataset
         self.id = id
         self.testcases = testcases
         self.solution = solution
+        self.test_type = test_type
 
     def __str__(self):
         return (
@@ -70,12 +73,34 @@ def get_function_name(func_str):
     else:
         return None
 
+
+def separate_python_code_blocks(text: str) -> List[str]:
+    """
+    Extracts all Python code blocks from a string.
+
+    Args:
+        text (str): The input text containing multiple Python code blocks.
+
+    Returns:
+        List[str]: A list of strings, each string being the content of a Python code block.
+    """
+    # Regular expression to match code blocks that start with ```python and end with ```
+    pattern = r"```python\s*(.*?)```"
+
+    # Use re.DOTALL to allow '.' to match newline characters
+    code_blocks = re.findall(pattern, text, re.DOTALL)
+
+    # Optionally, you can strip trailing or leading whitespace for each block
+    return [block.strip() for block in code_blocks]
+
+
 def generate_testcases(dataset_choice, llm_name):
     """
     :param dataset_choice: 0 for MBPP, 1 for HumanEval, 2 for LeetCode
     :param llm_name: Name of the LLM to use
     :return:
     """
+    test_type = 0 ## 0 for assertions, 1 for python unittest
     few_shot = PY_TEST_GENERATION_FEW_SHOT
     instruction = PY_TEST_GENERATION_CHAT_INSTRUCTION
     if dataset_choice == 0:
@@ -104,6 +129,30 @@ def generate_testcases(dataset_choice, llm_name):
         solutions = lvb.get_solutions()
         dataset = zip(prompts, solutions)
         dataset_name = 'LiveCodeBench'
+    elif dataset_choice == 4:
+        lvb2 = LiveCodeBenchLoader2()
+        prompts = lvb2.get_prompts()
+        solutions = lvb2.get_solutions()
+        dataset = zip(prompts, solutions)
+        dataset_name = 'LiveCodeBench2'
+    elif dataset_choice == 5:
+        few_shot = PY_TEST_GENERATION_FEW_SHOT_BigCodeBench
+        instruction = PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench
+        bigcode = BigCodeLoader(hard=1)
+        prompts = bigcode.get_prompts()
+        solutions = bigcode.get_solutions()
+        dataset = zip(prompts, solutions)
+        dataset_name = 'BigCodeBenchHard'
+        test_type = 1
+    elif dataset_choice == 6:
+        few_shot = PY_TEST_GENERATION_FEW_SHOT_BigCodeBench
+        instruction = PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench
+        bigcode = BigCodeLoader(hard=0)
+        prompts = bigcode.get_prompts()
+        solutions = bigcode.get_solutions()
+        dataset = zip(prompts, solutions)
+        dataset_name = 'BigCodeBench'
+        test_type = 1
     # elif dataset_choice == 3:
     #     ds = DS1000Loader()
     #     prompts = ds.get_prompts()
@@ -163,6 +212,14 @@ def generate_testcases(dataset_choice, llm_name):
             return True
         except Exception:
             return False
+
+    def is_syntax_valid2(code: str) -> bool:
+        try:
+            ast.parse(code)
+            return True
+        except Exception:
+            return False
+
     def process_gemini(text):
         added_text = "import unittest\ntestcase = unittest.TestCase()\n"
         return added_text + f'testcase.{text}'
@@ -183,15 +240,24 @@ def generate_testcases(dataset_choice, llm_name):
         # print('-------------------------------------------')
         # print(API_RESPONSE['text'])
         # print('-------------------------------------------')
-        all_tests = parse_tests(API_RESPONSE['text'])
-        func_name = get_function_name(solution)
-        valid_tests = [test for test in all_tests if is_syntax_valid(test, func_name)]
+        if test_type == 1: ## python unittests
+            all_tests = separate_python_code_blocks(API_RESPONSE['text'])
+        else:
+            all_tests = parse_tests(API_RESPONSE['text'])
+        if solution != '':
+            func_name = get_function_name(solution)
+            # print(f'func_name is {func_name}')
+            valid_tests = [test for test in all_tests if is_syntax_valid(test, func_name)]
+        else:  ## this is when we don't have solutions
+            valid_tests = [test for test in all_tests if is_syntax_valid2(test)]
         testcases.append(valid_tests)
 
         print(valid_tests)
-        print('-----------------------------------------')
-        raw_prob = RawLogProbs(prompt=prompt, logprobs=API_RESPONSE['logprobs'], dataset=dataset_name, id=idx, testcases=valid_tests,
-                               solution=solution)
+        print('-' * 100)
+        raw_prob = RawLogProbs(prompt=prompt, logprobs=API_RESPONSE['logprobs'], dataset=dataset_name, id=idx,
+                               testcases=valid_tests,
+                               solution=solution,
+                               test_type=test_type)
         raw_probs.append(raw_prob)
     # print(raw_probs)
     os.makedirs('unfiltered_testcases', exist_ok=True)

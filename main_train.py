@@ -668,7 +668,7 @@ if __name__ == "__main__":
         "--topN",
         type=int,
         default=5,
-        choices=[1, 3, 5, 7],
+        choices=[0, 1, 3, 5, 7],
         help=f"Specify the top N test cases. Choices are: {1, 3, 5, 7}.",
         required=False
     )

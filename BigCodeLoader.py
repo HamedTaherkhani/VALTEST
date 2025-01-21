@@ -26,16 +26,20 @@ def extract_function_signature(code_string):
         return None
 
 class BigCodeLoader:
-    def __init__(self):
-        ds = load_dataset("bigcode/bigcodebench", split="v0.1.2")
+    def __init__(self,hard=1):
+        # ds = load_dataset("bigcode/bigcodebench", split="v0.1.2")
+        if hard == 1:
+            ds = load_dataset("bigcode/bigcodebench-hard", split="v0.1.2")
+        else:
+            ds = load_dataset("bigcode/bigcodebench", split="v0.1.2")
         self.prompts = []
         self.dataset = ds
         self.solutions = []
         self.libs = []
         self.all_imports = []
         for item in ds:
-            if 'file' in item['complete_prompt']:
-                continue
+            # if 'file' in item['complete_prompt']:
+            #     continue
             self.prompts.append(item['complete_prompt'])
             # print(extract_function_signature(item['complete_prompt']))
             imports = find_import_statements(item['complete_prompt'])
@@ -48,7 +52,12 @@ class BigCodeLoader:
             # print('-----------------------------')
             if len(imports) == 0:
                 print(item['complete_prompt'])
-            self.solutions.append('\n'.join(imports) + '\n' + extract_function_signature(item['complete_prompt'])+ ":\n" + item['canonical_solution'])
+            # self.solutions.append('\n'.join(imports) + '\n' + extract_function_signature(item['complete_prompt'])+ ":\n" + item['canonical_solution'])
+            try:
+                sol = item['instruct_prompt'].split('```')[1] + item['canonical_solution']
+            except Exception as e:
+                sol = item['instruct_prompt'] + item['canonical_solution']
+            self.solutions.append(sol)
     def get_prompts(self):
         return self.prompts
 

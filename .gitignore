@@ -2,3 +2,4 @@
 venv
 .idea
 *.ipynb
+temp_dir

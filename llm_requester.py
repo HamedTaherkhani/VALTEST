@@ -64,7 +64,7 @@ class VertexAIRequester(LLMRequester):
         PROJECT_ID = os.getenv('GCP_PROJECT')
         GCP_LOCATION = os.getenv('GCP_LOCATION')
         vertexai.init(project=PROJECT_ID, location=GCP_LOCATION)
-        self.config = GenerationConfig(logprobs=5, response_logprobs=True, temperature=0, max_output_tokens=1500)
+        self.config = GenerationConfig(logprobs=2, response_logprobs=True, temperature=0, max_output_tokens=1500)
         model = GenerativeModel(name)
         self.chat_session = model.start_chat()
 
@@ -88,7 +88,7 @@ class VertexAIRequester(LLMRequester):
 
 
 class GeminiRequester(LLMRequester):
-    def __init__(self, candidates=5):
+    def __init__(self, candidates=1):
         genai.configure(api_key=os.getenv('gemini_key'))
         self.client = genai.GenerativeModel("models/gemini-1.5-pro")
         self.candidates = candidates
@@ -102,8 +102,8 @@ class GeminiRequester(LLMRequester):
                     candidate_count=self.candidates,
                     # stop_sequences=["x"],
                     # max_output_tokens=20,
-                    temperature=0.3,
-                    top_k=8,
+                    # temperature=0.3,
+                    # top_k=8,
                     # response_logprobs=True,
                     # logprobs=2
                 ),
