@@ -3,3 +3,5 @@ venv
 .idea
 *.ipynb
 temp_dir
+jiho.py
+test*.log
