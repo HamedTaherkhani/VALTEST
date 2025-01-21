@@ -1,24 +1,20 @@
 import ast
-import textwrap
 import argparse
 import sys
 import re
-from math import exp
-import numpy as np
-from IPython.display import display, HTML
 import os
 from typing import List
-from humaneval_loader import HumanEvalLoader
-from MBPPLoader import MBPPLoader
-from leetcode_loader import LeetCodeLoader
+from loaders.humaneval_loader import HumanEvalLoader
+from loaders.MBPPLoader import MBPPLoader
+from loaders.leetcode_loader import LeetCodeLoader
 from llm_requester import OpenaiRequester, HuggingfaceRequester, GeminiRequester, VertexAIRequester
-from livecodebench_loader import LiveCodeBenchLoader
-from livecodebench_loader2 import LiveCodeBenchLoader2
+from loaders.livecodebench_loader import LiveCodeBenchLoader
+from loaders.livecodebench_loader2 import LiveCodeBenchLoader2
 # from BigCodeLoader import BigCodeLoader
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
-from ds1000_loader import DS1000Loader
-from BigCodeLoader import BigCodeLoader
-from prompts import PY_TEST_GENERATION_FEW_SHOT_DS1000, PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, PY_TEST_GENERATION_CHAT_INSTRUCTION_DS1000, PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench
+from loaders.BigCodeLoader import BigCodeLoader
+from prompts import PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, \
+    PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench
 # Define an abstract base class for LLM requesters
 
 class RawLogProbs:
