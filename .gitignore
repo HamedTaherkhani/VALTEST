@@ -5,3 +5,4 @@ venv
 temp_dir
 jiho.py
 test*.log
+__pycache__
