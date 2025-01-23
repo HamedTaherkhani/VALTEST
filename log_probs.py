@@ -895,7 +895,9 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
     # print('-----------------------------------------')
     # print(separated_assertions)
     if test_type == 1:
+        # Method1
         # assertions_to_tokens = match_strings_to_tokens_for_unittests(sep_tests, logprobs)
+        # Method2
         assertions_to_tokens = match_strings_to_tokens_for_unittests_v2(sep_tests, logprobs)
     else:
         assertions_to_tokens =  match_strings_to_tokens(sep_tests, logprobs, dataset)
@@ -973,10 +975,11 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
             elif "ModuleNotFoundError" in output:
                 module_not_found_errors += 1
             elif "ImportError" in output:
-                # print(output)
-                # print('*'*100)
+                print(output)
+                print('*'*100)
                 import_errors += 1
             elif "NameError" in output:
+                # print(output)
                 name_error += 1
             elif "FileNotFoundError" in output:
                 file_not_found += 1
@@ -1162,11 +1165,11 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
                 test_type = 0
             testcases, errors = get_logprobs_dynamic(prob.logprobs, prob.testcases, prob.prompt,
                                                                prob.solution, test_type,dataset)
-            # if errors.import_errors !=0 :
-            #     print(prob.solution)
-            #     for t in testcases:
-            #         print(t.text)
-            #     print('*'*100)
+            if errors.import_errors !=0 :
+                print(prob.solution)
+                for t in testcases:
+                    print(t.text)
+                print('*'*100)
             all_errors += errors
             # for t in testcases:
             #     if t.output_logprobs[0] is None:

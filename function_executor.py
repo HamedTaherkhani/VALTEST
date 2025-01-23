@@ -5,7 +5,9 @@ import multiprocessing
 import unittest
 import sys
 import io
-import inspect
+import os
+import tempfile
+import subprocess
 from typing import List, Tuple, Union
 
 class TimeoutException(Exception):
@@ -88,15 +90,11 @@ def run_testcase(func_str, timeout=5) -> int:
             # print(f"An unexpected error occurred: {e} for \n : {func_str}")
             return 0
 
-def run_single_test_inline(code_str: str, test_str: str) -> Tuple[bool, int, int, str]:
+def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int, int, str]:
     """
-    Executes provided Python code and its unittest test cases inline (without spawning
-    another process). This function is intended to be run from a process pool worker.
-
-    It also sets OS-level resource limits:
-      - Timeout (wall clock) using SIGALRM.
-      - CPU time (in seconds) via RLIMIT_CPU.
-      - Memory (virtual address space) limit via RLIMIT_AS.
+    Executes provided Python code and its unittest test cases in a separate subprocess environment.
+    This function writes the code and test cases to temporary files and runs them using Python subprocess.
+    It enforces timeout and memory limits on the subprocess execution.
 
     Args:
         code_str (str): The Python code containing the function(s) to test.
@@ -109,82 +107,110 @@ def run_single_test_inline(code_str: str, test_str: str) -> Tuple[bool, int, int
             - Number of tests failed.
             - Detailed test output.
     """
-    def alarm_handler(signum, frame):
-        raise TimeoutError("Timeout reached during test execution.")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        code_path = os.path.join(temp_dir, 'code.py')
+        test_path = os.path.join(temp_dir, 'test.py')
 
-    # Set resource limits here:
-    try:
-        # Set wall-clock timeout (e.g., 10 seconds).
-        timeout_seconds = 120
-        signal.signal(signal.SIGALRM, alarm_handler)
-        signal.alarm(timeout_seconds)  # The alarm is scheduled
+        # Write the code under test to code.py
+        with open(code_path, 'w') as f:
+            f.write(code_str)
 
-        # Limit CPU time (e.g., 5 seconds). The limit applies to CPU seconds.
-        cpu_time_limit = 120  # seconds
-        resource.setrlimit(resource.RLIMIT_CPU, (cpu_time_limit, cpu_time_limit))
+        # Ensure that test.py can import code.py by adjusting sys.path
+        # Alternatively, add an import statement in test_str to import code.py
+        # For simplicity, assume test_str includes necessary imports
+        injected_import = "from code import *\n\n"
+        # Write the test cases to test.py
+        with open(test_path, 'w') as f:
+            f.write(injected_import)
+            f.write(test_str)
 
-        # Limit memory usage (e.g., 256 MB). This sets both soft and hard limits.
-        ram_limit = 2048 * 1024 * 1024  # in bytes
-        resource.setrlimit(resource.RLIMIT_AS, (ram_limit, ram_limit))
-    except Exception as e:
-        return (False, 0, 1, f"Exception setting resource limits: {e}")
+        # Define resource limits
+        def set_resource_limits():
+            try:
+                # Limit CPU time (e.g., 120 seconds)
+                cpu_time_limit = 120  # seconds
+                resource.setrlimit(resource.RLIMIT_CPU, (cpu_time_limit, cpu_time_limit))
 
-    try:
-        # Redirect stdout to capture unittest output.
-        new_stdout = io.StringIO()
-        old_stdout = sys.stdout
-        sys.stdout = new_stdout
+                # Limit memory usage (e.g., 256 MB)
+                ram_limit = 4024 * 1024 * 1024  # bytes
+                resource.setrlimit(resource.RLIMIT_AS, (ram_limit, ram_limit))
+            except Exception as e:
+                print(f"Error setting resource limits: {e}", file=sys.stderr)
+                sys.exit(1)
 
-        # Create a local namespace.
-        local_namespace = {}
+        try:
+            # Execute the tests using subprocess
+            completed_process = subprocess.run(
+                [sys.executable, '-m', 'unittest', 'test.py'],
+                cwd=temp_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                preexec_fn=set_resource_limits,
+                timeout=130  # Wall-clock timeout in seconds
+            )
 
-        # Execute the code under test.
-        exec(code_str, local_namespace)
+            output = completed_process.stdout.decode()
 
-        # Execute the test code.
-        exec(test_str, local_namespace)
+            # Parse the unittest output to determine pass/fail counts
+            all_passed = completed_process.returncode == 0
+            passed, failed = parse_unittest_output(output)
 
-        # Discover all unittest.TestCase subclasses.
-        test_cases = [
-            cls for name, cls in local_namespace.items()
-            if inspect.isclass(cls) and issubclass(cls, unittest.TestCase)
-        ]
-        if not test_cases:
-            raise ValueError("No subclasses of unittest.TestCase found in test code.")
+            return (all_passed, passed, failed, output)
 
-        # Load tests from discovered test cases.
-        suite = unittest.TestSuite()
-        for test_case in test_cases:
-            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(test_case))
+        except subprocess.TimeoutExpired:
+            return (False, 0, 1, "Test execution timed out.")
+        except Exception as e:
+            return (False, 0, 1, f"Exception during test execution: {e}")
 
-        # Run the tests.
-        runner = unittest.TextTestRunner(stream=new_stdout, verbosity=2)
-        result = runner.run(suite)
-
-        # Calculate passed/failed numbers.
-        passed = result.testsRun - len(result.failures) - len(result.errors)
-        failed = len(result.failures) + len(result.errors)
-        all_passed = (failed == 0)
-
-        # Collect output.
-        output = new_stdout.getvalue()
-
-        # Restore stdout.
-        sys.stdout = old_stdout
-
-        # Cancel the alarm now that execution is complete.
-        signal.alarm(0)
-        return (all_passed, passed, failed, output)
-    except Exception as e:
-        # Restore stdout and cancel alarm in case of exception.
-        sys.stdout = sys.__stdout__
-        signal.alarm(0)
-        return (False, 0, 1, f"Exception during test execution: {e}")
-
-
-def worker_wrapper(test_str: str, code_str: str) -> (bool, str):
+def parse_unittest_output(output: str) -> Tuple[int, int]:
     """
-    A wrapper that calls run_single_test_inline and returns whether all tests passed.
+    Parses the unittest output to extract the number of tests passed and failed.
+
+    Args:
+        output (str): The stdout and stderr output from the unittest execution.
+
+    Returns:
+        Tuple[int, int]: Number of tests passed and failed.
+    """
+    passed = 0
+    failed = 0
+    try:
+        # Example lines to parse:
+        # OK (tests=3)
+        # FAILED (failures=1, errors=0)
+        if "OK" in output:
+            # Extract the number of tests
+            start = output.find('(')
+            end = output.find(')', start)
+            if start != -1 and end != -1:
+                tests_info = output[start+1:end]
+                tests_run = int(tests_info.split('=')[1].strip(')'))
+                passed = tests_run
+                failed = 0
+        elif "FAILED" in output:
+            # Extract failures and errors
+            start = output.find('(')
+            end = output.find(')', start)
+            if start != -1 and end != -1:
+                failures_info = output[start+1:end]
+                parts = failures_info.split(',')
+                failures = int(parts[0].split('=')[1])
+                errors = int(parts[1].split('=')[1])
+                failed = failures + errors
+                # Assuming all other tests passed
+                # You might need to adjust this if more details are available
+                # For simplicity, set passed as tests_run - failed
+                # Here, tests_run is not directly available, so set passed to 0
+                passed = 0  # Alternatively, improve parsing to get exact counts
+    except Exception:
+        # If parsing fails, default to 0 passed and 1 failed
+        passed = 0
+        failed = 1
+    return (passed, failed)
+
+def worker_wrapper_subprocess(test_str: str, code_str: str) -> Tuple[bool, str]:
+    """
+    A wrapper that calls run_single_test_subprocess and returns whether all tests passed.
 
     Args:
         test_str (str): The test code string.
@@ -193,29 +219,26 @@ def worker_wrapper(test_str: str, code_str: str) -> (bool, str):
     Returns:
         tuple: (all_passed, output) where `all_passed` is True if all tests passed.
     """
-    all_passed, passed, failed, output = run_single_test_inline(code_str, test_str)
-
-    # Optionally, log output here.
+    all_passed, passed, failed, output = run_single_test_subprocess(code_str, test_str)
     return all_passed, output
 
-
-def pool_worker(arg_tuple):
+def pool_worker_subprocess(arg_tuple):
     """
-    Unpack arguments and call worker_wrapper.
+    Unpack arguments and call worker_wrapper_subprocess.
 
     Args:
         arg_tuple (tuple): Tuple of (test_str, code_str)
 
     Returns:
-        tuple: Result from worker_wrapper.
+        tuple: Result from worker_wrapper_subprocess.
     """
     test_str, code_str = arg_tuple
-    return worker_wrapper(test_str, code_str)
+    return worker_wrapper_subprocess(test_str, code_str)
 
 
 def run_unit_tests_parallel(code_str: str, test_list: List[str]):
     """
-    Runs multiple test case strings in parallel for a given code snippet.
+    Runs multiple test case strings in parallel for a given code snippet using subprocess.
 
     Args:
         code_str (str): The Python code under test.
@@ -226,22 +249,17 @@ def run_unit_tests_parallel(code_str: str, test_list: List[str]):
                      indicating if the corresponding test case passed and containing
                      the detailed test output.
     """
-    if 'matplotlib' in code_str:
-        print('HEEEre')
-        results = []
-        for test_str in test_list:
-            results.append(worker_wrapper(test_str, code_str))
-    else:
-        processes = len(test_list)
-        args = [(test_str, code_str) for test_str in test_list]
-        with multiprocessing.Pool(processes=processes) as pool:
-            results = pool.map_async(pool_worker, args)
-            try:
-                results = results.get(timeout=60)  # adjust timeout as needed
-            except multiprocessing.TimeoutError:
-                print("Timeout while waiting for worker processes to finish.")
-                pool.terminate()
-                pool.join()
+    processes = len(test_list)
+    args = [(test_str, code_str) for test_str in test_list]
+    with multiprocessing.Pool(processes=processes) as pool:
+        results = pool.map_async(pool_worker_subprocess, args)
+        try:
+            # Set a reasonable timeout for all tests to complete
+            results = results.get(timeout=300)  # e.g., 5 minutes
+        except multiprocessing.TimeoutError:
+            print("Timeout while waiting for worker processes to finish.")
+            pool.terminate()
+            pool.join()
+            # Assign failure to all pending tests
+            results = [(False, "Test execution timed out.") for _ in test_list]
     return results
-
-
