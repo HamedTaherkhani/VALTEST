@@ -1,0 +1,92 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/BigCodeBenchHard_gpt-4o_processed.pkl...
+147
+147
+{'input_mean': 99.85000000000001, 'input_max': 100.0, 'input_min': 97.76, 'input_sum': 4792.8, 'input_total': 48, 'input_variance': 0.19917083333333208, 'output_mean': 96.01314285714284, 'output_max': 100.0, 'output_min': 47.37, 'output_sum': 3360.4599999999996, 'output_total': 35, 'output_variance': 115.01740440816327, 'second_input_mean': 0.08750000000000001, 'second_input_max': 1.41, 'second_input_min': 0.0, 'second_input_sum': 4.2, 'second_input_total': 48, 'second_input_variance': 0.07020208333333333, 'second_output_mean': 2.4139999999999997, 'second_output_max': 24.05, 'second_output_min': 0.0, 'second_output_sum': 84.49, 'second_output_total': 35, 'second_output_variance': 33.85052114285714, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 1072
+Balanced dataset size - Number of invalid testcases: 546
+Valid Testcase Ratio" 0.66
+calculating initial coverage of the functions and mutation score....
+Test run timed out
+Test run timed out
+Test run timed out
+coverage: 86.159
+The total number of tests for mutation testing: 997
+running mutation testing...
+Proceeding with mutation testing despite test failures.
+
+Proceeding with mutation testing despite test failures.
+
+Proceeding with mutation testing despite test failures.
+
+Proceeding with mutation testing despite test failures.
+
+Final Mutation Testing Results:
+Total mutants: 1403
+Killed mutants: 880
+Survived mutants: 523
+Timeout mutants: 0
+Suspicious mutants: 0
+Overall Mutation Score: 62.72%
+Initial coverage:
+86.159
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 854, number of negative: 440
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000198 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 4331
+[LightGBM] [Info] Number of data points in the train set: 1294, number of used features: 20
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.659969 -> initscore=0.663156
+[LightGBM] [Info] Start training from score 0.663156
+[LightGBM] [Info] Number of positive: 885, number of negative: 409
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000168 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 4333
+[LightGBM] [Info] Number of data points in the train set: 1294, number of used features: 20
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.683926 -> initscore=0.771872
+[LightGBM] [Info] Start training from score 0.771872
+[LightGBM] [Info] Number of positive: 839, number of negative: 455
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000169 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 4319
+[LightGBM] [Info] Number of data points in the train set: 1294, number of used features: 20
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.648377 -> initscore=0.611913
+[LightGBM] [Info] Start training from score 0.611913
+[LightGBM] [Info] Number of positive: 873, number of negative: 422
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000181 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 4333
+[LightGBM] [Info] Number of data points in the train set: 1295, number of used features: 20
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.674131 -> initscore=0.726930
+[LightGBM] [Info] Start training from score 0.726930
+[LightGBM] [Info] Number of positive: 837, number of negative: 458
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000150 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 4335
+[LightGBM] [Info] Number of data points in the train set: 1295, number of used features: 20
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.646332 -> initscore=0.602955
+[LightGBM] [Info] Start training from score 0.602955
+Model: ensemble
+Threshold: 0.8
+=== Selection Statistics ===
+Total selected instances: 218
+The ratio valid test cases: 0.812
+============================
+Calculating coverage and mutation score using filtered test cases...
+coverage: 61.683
+The total number of tests for mutation testing: 163
+running mutation testing...
+Proceeding with mutation testing despite test failures.
+
+Proceeding with mutation testing despite test failures.
+
+Final Mutation Testing Results:
+Total mutants: 1601
+Killed mutants: 223
+Survived mutants: 1378
+Timeout mutants: 0
+Suspicious mutants: 0
+Overall Mutation Score: 13.93%
+{'ensemble': {'coverage': 61.683, 'total_selected': 218, 'valid_test_case_ration': 0.812}}
+Saving filtered functions to filtered_testcases/BigCodeBenchHard_gpt-4o.pkl...
