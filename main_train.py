@@ -359,13 +359,13 @@ def balance_data(X, y, groups):
 
 
 
-def perform_mutation_testing(functions: List[Function]):
+def perform_mutation_testing(functions: List[Function], dataset):
     functions_tests = []
     for f in functions:
         func_names = get_top_level_function_names(f.solution)
         if len(func_names) == 0:
-            print(f.solution)
-            print('here')
+            # print(f.solution)
+            # print('here')
             continue
         # functions_tests.append((f.solution, [ff.text for ff in f.testcases if ff.is_valid]))
         functions_tests.append((func_names, f.solution, [ff.text for ff in f.testcases if ff.is_valid]))
@@ -391,7 +391,7 @@ def perform_mutation_testing(functions: List[Function]):
     # print(f'Mutation scores per operator:{mutation_scores_per_operator}.3f')
 
     ## perform mutmut mutation testing
-    perform_overall_mutation_testing(functions_tests)
+    perform_overall_mutation_testing(functions_with_tests=functions_tests, dataset=dataset)
 
 
 def downsample_tests(tests):
@@ -407,7 +407,7 @@ def downsample_tests(tests):
     return downsampled_list
 
 
-def evaluate_function(functions: List[Function], do_mutation=False):
+def evaluate_function(functions: List[Function], do_mutation=False, dataset=None):
     # total_tests_before_sample = 0
     # total_tests_after_sample = 0
     # for f in functions:
@@ -419,10 +419,11 @@ def evaluate_function(functions: List[Function], do_mutation=False):
     # print(f'total_tests_before_sample: {total_tests_before_sample}')
     # print(f'total_tests_after_sample: {total_tests_after_sample}')
 
-    coverage = measure_coverage(functions=functions)
+    coverage = measure_coverage(functions=functions ,dataset=dataset)
     coverage = round(sum(coverage) / len(coverage), 3)
+    print('coverage:', coverage)
     if do_mutation:
-        perform_mutation_testing(functions)
+        perform_mutation_testing(functions, dataset)
     return coverage
 
 def create_deep_nn(input_dim):
@@ -586,7 +587,7 @@ def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, fea
     # Train and evaluate different models
     model_name = 'ensemble'
     print('calculating initial coverage of the functions and mutation score....')
-    coverage = evaluate_function(copy.deepcopy(functions), mutation)
+    coverage = evaluate_function(copy.deepcopy(functions), mutation, dataset)
     print('Initial coverage:')
     print(coverage)
     models_performance = {}
@@ -599,7 +600,7 @@ def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, fea
     for group, ids in selected_ids_per_group.items():
         temp[group].testcases = [te for idx, te in enumerate(temp[group].testcases) if idx in ids]
     print(f'Calculating coverage and mutation score using filtered test cases...')
-    coverage = evaluate_function(temp, mutation)
+    coverage = evaluate_function(temp, mutation, dataset)
     models_performance[model_name] = {
         'coverage': coverage,
         'total_selected': total_selected,
@@ -659,16 +660,16 @@ if __name__ == "__main__":
         "--threshold",
         type=float,
         default=0.8,
-        help=f"Specify the threshold for filtering out the test cases. Choices are: {0.5, 0.65, 0.7, 0.8, 0.85, 0.9}.",
-        choices=[0.5, 0.65, 0.7, 0.8, 0.85, 0.9],
+        help=f"Specify the threshold for filtering out the test cases. Choices are: {0.5, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9}.",
+        choices=[0.5, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9],
         required=False
     )
     parser.add_argument(
         "--topN",
         type=int,
         default=5,
-        choices=[0, 1, 3, 5, 7],
-        help=f"Specify the top N test cases. Choices are: {1, 3, 5, 7}.",
+        choices=[0, 1, 2, 3, 5, 7],
+        help=f"Specify the top N test cases. Choices are: {1, 2, 3, 5, 7}.",
         required=False
     )
     parser.add_argument(

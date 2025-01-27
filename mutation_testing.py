@@ -60,12 +60,12 @@ def find_mut_score(log:str):
     return None
 
 
-def perform_overall_mutation_testing(functions_with_tests, chunk_size=10):
+def perform_overall_mutation_testing(functions_with_tests, dataset, chunk_size=10):
     separated_functions = [functions_with_tests[i:i + chunk_size] for i in range(0, len(functions_with_tests), chunk_size)]
     total_mutants = total_killed = total_survived = total_timeout = total_suspicious = 0
 
     for function in tqdm(separated_functions):
-        mutants, killed, survived, timeout, suspicious = perform_mutation_testing_for_functions(function)
+        mutants, killed, survived, timeout, suspicious = perform_mutation_testing_for_functions(function, dataset)
         total_mutants += mutants
         total_killed += killed
         total_survived += survived
@@ -84,38 +84,33 @@ def perform_overall_mutation_testing(functions_with_tests, chunk_size=10):
     print(f"Suspicious mutants: {total_suspicious}")
     print(f"Overall Mutation Score: {overall_mutation_score:.2f}%")
 
-def perform_mutation_testing_for_functions(functions_with_tests):
-    # Create a temporary directory for the project
-    # temp_dir = tempfile.mkdtemp()
-    cwd = os.getcwd()
-    temp_dir = cwd+'/temp2'
-    try:
-        # Set up environment variables
-        os.environ['PYTHONPATH'] = temp_dir
 
-        # Create project structure
-        src_dir = os.path.join(temp_dir, 'src')
-        tests_dir = os.path.join(temp_dir, 'tests')
-        os.makedirs(src_dir)
-        os.makedirs(tests_dir)
+def make_files_for_testing(temp_dir, functions_with_tests, dataset):
 
-        # Write each function to its own module in src/
-        function_modules = []
-        for func_names, func_code, test_cases in functions_with_tests:
-            if len(test_cases) == 0:
-                continue
-            if func_names[0].startswith('test_'):
-                continue
-            # if func_names[0] in ('factorize', 'get_odd_collatz', 'minPath'):
-            #     print('here')
-            #     continue
-            module_names = func_names
-            module_file_name = f'{module_names[0]}.py'
-            module_file_path = os.path.join(src_dir, module_file_name)
-            with open(module_file_path, 'w') as f:
-                f.write(func_code.strip() + '\n')
-            function_modules.append((module_names, test_cases))
+    # Create project structure
+    src_dir = os.path.join(temp_dir, 'src')
+    tests_dir = os.path.join(temp_dir, 'tests')
+    os.makedirs(src_dir)
+    os.makedirs(tests_dir)
 
+    # Write each function to its own module in src/
+    function_modules = []
+    for func_names, func_code, test_cases in functions_with_tests:
+        if len(test_cases) == 0:
+            continue
+        if func_names[0].startswith('test_'):
+            continue
+        # if func_names[0] in ('factorize', 'get_odd_collatz', 'minPath'):
+        #     print('here')
+        #     continue
+        module_names = func_names
+        module_file_name = f'{module_names[0]}.py'
+        module_file_path = os.path.join(src_dir, module_file_name)
+        with open(module_file_path, 'w') as f:
+            f.write(func_code.strip() + '\n')
+        function_modules.append((module_names, test_cases))
+
+    if 'BigCodeBench' not in dataset:
         # Write test cases for each function in tests/
         for module_names, test_cases in function_modules:
             test_file_name = f'test_{module_names[0]}.py'
@@ -149,25 +144,43 @@ def perform_mutation_testing_for_functions(functions_with_tests):
                 f.write(f'def test_{module_name}():\n')
                 for line in test_code_lines:
                     f.write(f'    {line}\n')
+    else:
+        for module_names, test_cases in function_modules:
+            test_file_name = f'test_{module_names[0]}.py'
+            test_file_path = os.path.join(tests_dir, test_file_name)
+            with open(test_file_path, 'w') as f:
+                for module_name in module_names:
+                    f.write(f'from src.{module_names[0]} import {module_name}\n')
+                for test_case in test_cases:
+                    f.write(test_case.strip() + '\n')
+    ###
+    module_file_name = f'__init__.py'
+    src_path = os.path.join(src_dir, module_file_name)
+    test_file_path = os.path.join(tests_dir, module_file_name)
+    with open(src_path, 'w') as f:
+        f.write('\n')
+    with open(test_file_path, 'w') as f:
+        f.write('\n')
+    with open(temp_dir + module_file_name, 'w') as f:
+        f.write('\n')
+    os.chdir(temp_dir)
+    return function_modules
 
-
-        ###
-        module_file_name = f'__init__.py'
-        src_path = os.path.join(src_dir, module_file_name)
-        test_file_path = os.path.join(tests_dir, module_file_name)
-        with open(src_path, 'w') as f:
-            f.write('\n')
-        with open(test_file_path, 'w') as f:
-            f.write('\n')
-        with open(temp_dir + module_file_name, 'w') as f:
-            f.write('\n')
-        os.chdir(temp_dir)
+def perform_mutation_testing_for_functions(functions_with_tests, dataset):
+    # Create a temporary directory for the project
+    # temp_dir = tempfile.mkdtemp()
+    cwd = os.getcwd()
+    temp_dir = cwd+'/temp2'
+    # Set up environment variables
+    os.environ['PYTHONPATH'] = temp_dir
+    try:
+        function_modules = make_files_for_testing(temp_dir, functions_with_tests, dataset)
 
         # Run pytest to check tests, but proceed even if tests fail
         # print("Running pytest to check tests...")
         pytest_result = subprocess.run([sys.executable, '-m', 'pytest' ,'-x', '--assert=plain'], capture_output=True, text=True, cwd=temp_dir)
         if pytest_result.returncode != 0:
-            print("Tests failed. Output:")
+            # print("Tests failed. Output:")
             # print(pytest_result.stdout)
             # print(pytest_result.stderr)
             print("Proceeding with mutation testing despite test failures.\n")

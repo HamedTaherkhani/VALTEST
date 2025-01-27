@@ -283,6 +283,6 @@ class TestLargeLogFile(unittest.TestCase):
 
 PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench = """
 You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring. Do not make any comments on the test cases.
-Generate 5 to 10 unit test cases using python unittest. Write every unit test in a separate class based python unittest module. Write tests in class format. Put each unit test between separate 
+Generate 10 to 20 unit test cases using python unittest. Write every unit test in a separate class based python unittest module. Write tests in class format. Put each unit test between separate 
 ```python and ``` tags. Make sure every testcase has setUp method and also another method that defines a test case. Write every object initialization or defining any variable in the setUp. Don't write more than 1 test function in each test case.
 """

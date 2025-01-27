@@ -91,33 +91,16 @@ def run_testcase(func_str, timeout=5) -> int:
             return 0
 
 def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int, int, str]:
-    """
-    Executes provided Python code and its unittest test cases in a separate subprocess environment.
-    This function writes the code and test cases to temporary files and runs them using Python subprocess.
-    It enforces timeout and memory limits on the subprocess execution.
-
-    Args:
-        code_str (str): The Python code containing the function(s) to test.
-        test_str (str): The Python code containing unittest test cases.
-
-    Returns:
-        Tuple[bool, int, int, str]:
-            - A boolean indicating if all tests passed.
-            - Number of tests passed.
-            - Number of tests failed.
-            - Detailed test output.
-    """
+    if 'import subprocess' in test_str:
+        return (False, 0, 1, 'subprocess')
     with tempfile.TemporaryDirectory() as temp_dir:
         code_path = os.path.join(temp_dir, 'code.py')
         test_path = os.path.join(temp_dir, 'test.py')
-
         # Write the code under test to code.py
         with open(code_path, 'w') as f:
             f.write(code_str)
 
         # Ensure that test.py can import code.py by adjusting sys.path
-        # Alternatively, add an import statement in test_str to import code.py
-        # For simplicity, assume test_str includes necessary imports
         injected_import = "from code import *\n\n"
         # Write the test cases to test.py
         with open(test_path, 'w') as f:
@@ -131,8 +114,8 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
                 cpu_time_limit = 120  # seconds
                 resource.setrlimit(resource.RLIMIT_CPU, (cpu_time_limit, cpu_time_limit))
 
-                # Limit memory usage (e.g., 256 MB)
-                ram_limit = 4024 * 1024 * 1024  # bytes
+                # Limit memory usage (e.g., 1 GB)
+                ram_limit = 2048 * 1024 * 1024  # bytes
                 resource.setrlimit(resource.RLIMIT_AS, (ram_limit, ram_limit))
             except Exception as e:
                 print(f"Error setting resource limits: {e}", file=sys.stderr)
@@ -141,15 +124,20 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
         try:
             # Execute the tests using subprocess
             completed_process = subprocess.run(
-                [sys.executable, '-m', 'unittest', 'test.py'],
+                'python -m unittest test.py',
+                shell=True,
+                check=True,
                 cwd=temp_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 preexec_fn=set_resource_limits,
                 timeout=130  # Wall-clock timeout in seconds
             )
+            output = completed_process.stdout.decode('utf-8')
 
-            output = completed_process.stdout.decode()
+            # Print the captured output
+            # print("Subprocess Output:")
+            # print(output)
 
             # Parse the unittest output to determine pass/fail counts
             all_passed = completed_process.returncode == 0
@@ -249,9 +237,10 @@ def run_unit_tests_parallel(code_str: str, test_list: List[str]):
                      indicating if the corresponding test case passed and containing
                      the detailed test output.
     """
-    processes = len(test_list)
+    # multiprocessing.set_start_method('spawn')
+    print(f'Processing {len(test_list)} test cases...')
     args = [(test_str, code_str) for test_str in test_list]
-    with multiprocessing.Pool(processes=processes) as pool:
+    with multiprocessing.Pool() as pool:
         results = pool.map_async(pool_worker_subprocess, args)
         try:
             # Set a reasonable timeout for all tests to complete
@@ -262,4 +251,7 @@ def run_unit_tests_parallel(code_str: str, test_list: List[str]):
             pool.join()
             # Assign failure to all pending tests
             results = [(False, "Test execution timed out.") for _ in test_list]
+        except BrokenPipeError:
+            print('Broken pipe error')
+            return [(False, "Broken Pipe Error") for _ in test_list]
     return results

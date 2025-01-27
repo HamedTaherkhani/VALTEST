@@ -52,7 +52,7 @@ def evaluate_dataset_with_model(dataset: str, llm: str, mutation:False,
             test_case_ids.append((func_id, test_idx))
 
     print('calculating initial coverage of the functions and mutation score....')
-    coverage = evaluate_function(copy.deepcopy(functions), do_mutation=False)
+    coverage = evaluate_function(copy.deepcopy(functions), do_mutation=False, dataset=dataset)
     print('Initial coverage:')
     print(coverage)
     models_performance = {}
@@ -144,7 +144,7 @@ def evaluate_dataset_with_model(dataset: str, llm: str, mutation:False,
     print(f'Calculating coverage and mutation score using filtered test cases...')
     models_performance = {}
 
-    coverage = evaluate_function(temp, do_mutation=False)
+    coverage = evaluate_function(temp, do_mutation=False, dataset=dataset)
     models_performance['ensemble'] = {
         'coverage': coverage,
         'total_selected': total_selected,

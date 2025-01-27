@@ -5,10 +5,11 @@ import pickle
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from typing import List
-
+from openai import OpenAI
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
-from function_executor import run_test_cases
+from function_executor import run_test_cases, run_unit_tests_parallel, run_single_test_subprocess
 from log_probs import Function, TestCase
+import multiprocessing
 from main_train import evaluate_function
 from tqdm import tqdm
 import vertexai
@@ -27,20 +28,22 @@ class LLMClient:
 class OpenAIClient(LLMClient):
     """Client for interacting with OpenAI's API."""
 
-    def __init__(self, api_key):
-        import openai
-
-        openai.api_key = api_key
-        self.client = openai
+    def __init__(self, name):
+        self.key = os.getenv('openai_key')
+        self.client = OpenAI(api_key=self.key)
+        self.name = name
 
     def chat_completion(self, model_name, messages, max_tokens, temperature, seed):
-        response = self.client.ChatCompletion.create(
-            model=model_name,
-            messages=messages,
-            max_tokens=max_tokens,
-            temperature=temperature,
-        )
-        return response.choices[0].message.content.strip()
+        params = {
+            "model": self.name,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        }
+
+        completion = self.client.chat.completions.create(**params)
+        text = completion.choices[0].message.content
+        return text.strip()
 
 
 class VertexAIClient(LLMClient):
@@ -71,15 +74,15 @@ def create_llm_client(llm):
             model_name=llm,
         )
     else:
-        client = OpenAIClient(api_key=os.getenv('openai_key'))
+        client = OpenAIClient(llm)
     return client
 
 
-def curate_testcases(dataset, llm, threshold=0.85):
+def curate_testcases(dataset, llm, threshold=0.7):
     """Curates test cases by validating and adjusting them using an LLM."""
     with open(f'filtered_testcases/{dataset}_{llm}.pkl', 'rb') as f:
         functions: List[Function] = pickle.load(f)
-
+    # functions = functions[:10]
     total_valid = sum(
         1 for f in functions for testcase in f.testcases if testcase.is_valid == 1
     )
@@ -98,16 +101,60 @@ def curate_testcases(dataset, llm, threshold=0.85):
     print(f'Below threshold: {below_threshold}')
 
     client = create_llm_client(llm)
-    functions = validate_test_cases_concurrently(functions, threshold, client, llm)
+    functions = validate_test_cases_concurrently(functions, threshold, client, llm, dataset)
 
     curated_function_file_name = f'curated_testcases/{dataset}_{llm}.pkl'
     print(f'Saving curated functions to {curated_function_file_name}...')
     with open(curated_function_file_name, 'wb') as f:
         pickle.dump(functions, f)
 
+import re
+
+def extract_python_code(text):
+    # Regex to find text within ```python and ``` tags
+    try:
+        pattern = r"```python(.*?)```"
+        matches = re.findall(pattern, text, re.DOTALL)
+    except Exception:
+        return text
+    return matches[0]
+
+
+def process_unit_testcases(f, testcase, client, llm):
+    prompt = f"""
+    You will receive a function description and a python unittest designed to test the the function. Your task is to find any issues with the test case and verify it's correctness according to the function specification.
+    Use detailed, step-by-step reasoning to check the correctness of the unit test. After validating, adjust the test case as necessary. Finally, present the validated test case enclosed within exactly ***```python and ```*** tags.
+    Do not include anything else inside the asterisks—only the testcase. Don't use subprocess, multiprocessing or concurrent libraries. Also don't add any more assertions in the test case. And don't make the test stricter. Loosen the test case to make them assertions less restrictive if you are not sure about the expected output of the assertions in the test case.
+    Function Description:
+    {f.prompt}
+
+    Test Case:
+    {testcase.text}
+    """
+    response_text = client.chat_completion(
+        model_name=llm,
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=2000,
+        temperature=0,
+        seed=123,
+    )
+    if response_text is None:
+        return
+    # Extract the validated assertion from the LLM's response
+    reply = response_text.strip()
+    # print(f'Response: {reply}')
+    code = extract_python_code(reply)
+    # print(f'Code: {code}')
+    try:
+        ast.parse(code)
+        # print(code)
+        testcase.validated_text = code
+    except SyntaxError:
+        print("Syntax error in validated assertion.")
 
 def process_testcase(f, testcase, client, llm):
     """Processes a single test case using the specified LLM client."""
+
     prompt = f"""
 You will receive a function description and an assertion designed to test that function. Your task is to verify whether the assertion correctly tests the function according to its specification. Use detailed, step-by-step reasoning to check the correctness of the assertion. After validating, adjust the assertion output as necessary. Finally, present the validated assertion enclosed within three asterisks (***). Do not include anything else inside the asterisks—only the assertion.
 
@@ -148,11 +195,12 @@ Test Case:
         print("No *** found in LLM response.")
 
 
-def validate_test_cases_concurrently(functions, threshold, client, llm):
+def validate_test_cases_concurrently(functions, threshold, client, llm, dataset):
     """Validates test cases concurrently using a thread pool."""
-    with ThreadPoolExecutor(max_workers=1) as executor:
+    process_func = process_unit_testcases if 'BigCodeBench' in dataset else process_testcase
+    with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [
-            executor.submit(process_testcase, f, testcase, client, llm)
+            executor.submit(process_func, f, testcase, client, llm)
             for f in functions
             for testcase in f.testcases
             if testcase.prediction_y_prob < threshold
@@ -161,6 +209,8 @@ def validate_test_cases_concurrently(functions, threshold, client, llm):
             future.result()
 
     for f in functions:
+        old_tests = []
+        new_tests = []
         testcases = []
         for testcase in f.testcases:
             if getattr(testcase, 'validated_text', None):
@@ -168,13 +218,39 @@ def validate_test_cases_concurrently(functions, threshold, client, llm):
                     testcase.text.replace(' ', '').replace('\n', '')
                     != testcase.validated_text.replace(' ', '').replace('\n', '')
                 ):
+                    old_tests.append(testcase.text)
+                    new_tests.append(testcase.validated_text)
                     testcase.text = testcase.validated_text
+                else:
+                    old_tests.append(testcase.text)
+                    new_tests.append(testcase.text)
+            else:
+                old_tests.append(testcase.text)
+                new_tests.append(testcase.text)
+                # print(testcase.validated_text)
             testcases.append(testcase.text)
+        if 'BigCodeBench' not in dataset:
+            is_passed_list = run_test_cases(f.solution, testcases, timeout=5)
+        else:
+            # is_passed_list = []
+            # for t in testcases:
+            #     print(t)
+            #     is_passed_list.append(run_single_test_subprocess(test_str=t, code_str=f.solution)[0])
+            is_passed_list = run_unit_tests_parallel(f.solution, testcases)
+            is_passed_list = [passed[0] for passed in is_passed_list]
 
-        is_passed_list = run_test_cases(f.solution, testcases, timeout=5)
+        orig_passed_list = [t.is_valid for t in f.testcases]
+        # print('orignal passed', orig_passed_list)
+        # print('passed after validating', is_passed_list)
+        # print(f.solution)
+        # for index, t in enumerate(f.testcases):
+            # if t.is_valid == 1 and not is_passed_list[index]:
+            #     print(old_tests[index])
+            #     print(new_tests[index])
+            #     print('*'*100)
         for index, testcase in enumerate(f.testcases):
             testcase.is_valid = 1 if is_passed_list[index] else 0
-
+        # print('*'*100)
     return functions
 
 

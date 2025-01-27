@@ -1145,39 +1145,21 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
     all_errors = ErrorTypes()
     print(f'the dataset length is {len(raw_probs)}')
     for idx,prob in tqdm(enumerate(raw_probs)):
-        print('the idx for problem is {}'.format(idx))
-        # if idx in (51,52):
-        #     continue
-        # print(idx)
-        # if idx == 182:
-        #     continue
-        # print(prob)
-        # print(idx)
-        # if idx != 38:
-        #     continue
         try:
             if len(prob.testcases) == 0:
                 continue
-            # print(prob.testcases)
             try:
                 test_type = prob.test_type
             except AttributeError:
                 test_type = 0
             testcases, errors = get_logprobs_dynamic(prob.logprobs, prob.testcases, prob.prompt,
                                                                prob.solution, test_type,dataset)
-            if errors.import_errors !=0 :
-                print(prob.solution)
-                for t in testcases:
-                    print(t.text)
-                print('*'*100)
+            # if errors.import_errors !=0 :
+            #     print(prob.solution)
+            #     for t in testcases:
+            #         print(t.text)
+            #     print('*'*100)
             all_errors += errors
-            # for t in testcases:
-            #     if t.output_logprobs[0] is None:
-            #         print(idx)
-            #         sys.exit()
-            # print(testcases)
-            # print('*'*100)
-            # sys.exit(1)
 
         except Exception as e:
             # print(e)
@@ -1187,8 +1169,7 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
         # Create Function object and append to the list
         f = Function(prompt=prob.prompt, testcases=testcases, solution=prob.solution)
         functions.append(f)
-    # sys.exit()
-    print(all_errors)
+    # print(all_errors)
     # Save processed functions for future use
     print(f'Saving processed functions to {processed_file_name}...')
     with open(processed_file_name, 'wb') as f:
