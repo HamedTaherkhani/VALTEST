@@ -9,6 +9,16 @@ from typing import List, Dict, Any
 from log_probs import Function
 from tqdm import tqdm
 import re
+import coverage
+import subprocess
+import tempfile
+import os
+import sys
+import uuid
+import json
+import resource  # Note: Only available on Unix-based systems
+from functools import partial
+from multiprocessing import Pool, cpu_count
 
 def calculate_average_coverage(coverage_data: Dict[str, Dict[str, Any]]) -> Dict[str, float]:
     """
@@ -106,8 +116,139 @@ def remove_comments_and_empty_lines(code: str) -> str:
     return '\n'.join(filtered_lines)
 
 
-def measure_coverage(functions: List[Function]):
+def limit_resources(max_memory_mb):
+    """
+    Set resource limits for the subprocess.
+
+    Args:
+        max_memory_mb (int): Maximum memory in megabytes.
+    """
+    # Convert megabytes to bytes
+    max_memory_bytes = max_memory_mb * 1024 * 1024
+    # Set maximum address space (virtual memory)
+    resource.setrlimit(resource.RLIMIT_AS, (max_memory_bytes, max_memory_bytes))
+    # Optionally, set other limits like CPU time if needed
+    # resource.setrlimit(resource.RLIMIT_CPU, (timeout_seconds, timeout_seconds))
+
+
+
+def get_line_coverage_unittest(code_str, test_case_strings):
+    """
+    Calculate the line coverage of the given code against provided test cases using coverage.py via subprocess.
+
+    Args:
+        code_str (str): The code under test as a string.
+        test_case_strings (list of str): List of test case class definitions as strings.
+
+    Returns:
+        float: Line coverage percentage.
+    """
+    actual_tests = []
+    for test in test_case_strings:
+        if 'import subprocess' not in test:
+            actual_tests.append(test)
+    max_memory_mb = 5120
+    # Generate a unique identifier for this test run to avoid module caching issues
+    unique_id = uuid.uuid4().hex
+    test_module_name = f'test_code_{unique_id}'
+
+    # Use TemporaryDirectory to ensure isolation
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # temp_dir = '/home/hamed/PycharmProjects/hallucination/temp_dir2'
+        # Paths for the code under test and the test module
+        code_path = os.path.join(temp_dir, 'code_under_test.py')
+        test_path = os.path.join(temp_dir, f'{test_module_name}.py')
+        # Write the code under test to 'code_under_test.py'
+        with open(code_path, 'w') as code_file:
+            code_file.write(code_str)
+
+        # Write the test cases to the unique test module
+        with open(test_path, 'w') as test_file:
+            # Import the code under test
+            test_file.write('from code_under_test import *\n\n')
+            # Write each test case class
+            for test_case in actual_tests:
+                test_file.write(test_case.strip() + '\n\n')
+
+        # Prepare environment variables
+        env = os.environ.copy()
+        # Optionally, you can set COVERAGE_FILE to ensure coverage data is stored uniquely
+        coverage_file = os.path.join(temp_dir, f'.coverage_{unique_id}')
+        env['COVERAGE_FILE'] = coverage_file
+
+        # Change the working directory to the temporary directory
+        original_cwd = os.getcwd()
+        os.chdir(temp_dir)
+        try:
+
+            # Execute the coverage run command
+            try:
+                subprocess.run(
+                    'coverage run -m unittest discover',
+                    preexec_fn=lambda: limit_resources(max_memory_mb),
+                    timeout=120,
+                    cwd=temp_dir, shell=True, check=True
+                )
+            except subprocess.TimeoutExpired:
+                print(f"Test run timed out")
+                return 0
+            except subprocess.CalledProcessError as e:
+                pass
+                # print(f"Test run failed: {e.stderr.decode()}")
+            except KeyboardInterrupt as e:
+                print(f"Test interrupted")
+                pass
+            subprocess.run(
+                'python -m coverage json -o coverage.json',
+                cwd=temp_dir, shell=True
+            )
+
+            # Read the coverage.json file
+            coverage_json_path = os.path.join(temp_dir, 'coverage.json')
+            if not os.path.exists(coverage_json_path):
+                # If coverage.json does not exist, return 0 coverage
+                return 0.0
+
+            with open(coverage_json_path, 'r') as json_file:
+                coverage_data = json.load(json_file)
+            # Extract coverage data for 'code_under_test.py'
+            files = coverage_data.get('files', {})
+            # if code_file_key not in files:
+            #     print('jere')
+            #     # If the code file is not in the coverage report, return 0 coverage
+            #     return 0.0
+            file_coverage = files['code_under_test.py']
+            summary = file_coverage.get('summary', {})
+            coverage_percent = summary.get('percent_covered', 0.0)
+
+            return coverage_percent
+
+        finally:
+            # Restore the original working directory
+            os.chdir(original_cwd)
+
+def _measure_coverage_for_function(func):
+    """
+    Helper function to encapsulate the coverage call
+    for a single Function object.
+    """
+    tests_list = [tc.text for tc in func.testcases]
+    return get_line_coverage_unittest(func.solution, tests_list)
+
+def measure_coverage(functions: List[Function], dataset):
     coverage_results = []
+    if 'BigCodeBench' in dataset:
+        with Pool() as pool:
+            # imap gives you an iterator, so wrap in list or iterate to collect results
+            coverage_results = list(
+                tqdm(
+                    pool.imap(_measure_coverage_for_function, functions),
+                    total=len(functions),
+                    desc="Calculating coverage"
+                )
+            )
+        return coverage_results
+
     for idx, func in tqdm(enumerate(functions)):
         # print(idx)
         lines_per_testcase = []
