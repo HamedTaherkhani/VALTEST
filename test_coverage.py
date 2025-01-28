@@ -232,7 +232,7 @@ def _measure_coverage_for_function(func):
     Helper function to encapsulate the coverage call
     for a single Function object.
     """
-    tests_list = [tc.text for tc in func.testcases]
+    tests_list = [tc.text for tc in func.testcases if tc.is_valid==1]
     return get_line_coverage_unittest(func.solution, tests_list)
 
 def measure_coverage(functions: List[Function], dataset):
@@ -254,6 +254,8 @@ def measure_coverage(functions: List[Function], dataset):
         lines_per_testcase = []
         total_lines = 1
         for test_case in func.testcases:
+            if test_case.is_valid == 0:
+                continue
             sol = remove_comments_and_empty_lines(func.solution) + '\n'
             sol += test_case.text + "\n"
             executed_lines, tot = compute_line_coverage(sol, idx)

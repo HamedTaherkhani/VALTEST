@@ -64,8 +64,14 @@ def calculate_perplexity(probabilities):
 
 # Concrete Strategy for Statistical Feature Extraction
 class StatisticalFeatureExtraction(FeatureExtractionStrategy):
+    def __init__(self, use_entropy=False):
+        self.use_entropy = use_entropy
+
     def extract_features(self, log_probs: List[LogProb]) -> dict:
-        probs = [lp.prob for lp in log_probs]
+        if self.use_entropy:
+            probs = [lp.entropy for lp in log_probs]
+        else:
+            probs = [lp.prob for lp in log_probs]
         if not probs:
             return {'mean': 0, 'max': 0, 'min': 0, 'sum': 0, 'total':0,
                     'variance':0,
@@ -150,21 +156,15 @@ def extract_features(test_cases: List[TestCase], function_ids: List[int], strate
     for test_case, func_id in zip(test_cases, function_ids):
         # Extract input features and add a prefix to each key
         input_features = {f'input_{k}': v for k, v in strategy.extract_features(test_case.input_logprobs).items()}
-        second_input_features = {f'second_input_{k}': v for k, v in
-                                 strategy.extract_features(test_case.second_input_logprobs).items()}
-
         # Extract output features and add a prefix to each key
         output_features = {f'output_{k}': v for k, v in strategy.extract_features(test_case.output_logprobs).items()}
-        second_output_features = {f'second_output_{k}': v for k, v in
-                                  strategy.extract_features(test_case.second_output_logprobs).items()}
-
         # Based on feature_sets argument, combine relevant features
         if feature_sets == 'input':
-            combined_features = {**input_features, **second_input_features}
+            combined_features = {**input_features}
         elif feature_sets == 'output':
-            combined_features = {**output_features, **second_output_features}
+            combined_features = {**output_features}
         else:  # 'all'
-            combined_features = {**input_features, **output_features, **second_input_features, **second_output_features}
+            combined_features = {**input_features, **output_features}
 
         # Add 'is_valid' and 'function_id' to the feature set
         combined_features['is_valid'] = test_case.is_valid
@@ -545,7 +545,7 @@ def remove_unnecessary_functions(functions):
     print(len(functions))
     return functions
 
-def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, feature_sets='all'):
+def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, feature_sets='all', use_entropy=False):
     print('Extracting testcases and running them...')
     functions = get_all_tests(dataset, llm)
 
@@ -561,8 +561,7 @@ def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, fea
             function_ids.append(func_id)
             test_case_ids.append((func_id, test_idx))  # Assign unique ID
 
-    strategy = StatisticalFeatureExtraction()
-    # print(all_testcases)
+    strategy = StatisticalFeatureExtraction(use_entropy=use_entropy)
     features = extract_features(all_testcases, function_ids, strategy, feature_sets)
     print(features[0])
     # visualize_features(features)
@@ -660,8 +659,8 @@ if __name__ == "__main__":
         "--threshold",
         type=float,
         default=0.8,
-        help=f"Specify the threshold for filtering out the test cases. Choices are: {0.5, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9}.",
-        choices=[0.5, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9],
+        help=f"Specify the threshold for filtering out the test cases. Choices are: {0.5,0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9}.",
+        choices=[0.5,0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9],
         required=False
     )
     parser.add_argument(
@@ -680,6 +679,13 @@ if __name__ == "__main__":
         help=f"Specify the feature sets to use. Choices are: {'all', 'input', 'output'}.",
         required=False
     )
+    parser.add_argument(
+        "--use_entropy",
+        type=bool,
+        default=False,
+        choices=[True, False],
+        required=False,
+    )
     args = parser.parse_args()
     file_name = f'output/{args.dataset}_{args.llm}.txt'
     # file_name = f'output/RQ2/{args.dataset}_{args.llm}_{args.threshold}_{args.topN}.txt'
@@ -688,4 +694,4 @@ if __name__ == "__main__":
     with open(file_name, 'w') as f:
         orig_stdout = sys.stdout
         sys.stdout = f
-        main(args.dataset, args.llm, args.mutation, args.threshold, args.topN, args.features)
+        main(args.dataset, args.llm, args.mutation, args.threshold, args.topN, args.features, args.use_entropy)

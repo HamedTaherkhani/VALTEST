@@ -94,6 +94,7 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
     if 'import subprocess' in test_str:
         return (False, 0, 1, 'subprocess')
     with tempfile.TemporaryDirectory() as temp_dir:
+        # temp_dir = '/home/hamed/PycharmProjects/hallucination/temp_dir2/'
         code_path = os.path.join(temp_dir, 'code.py')
         test_path = os.path.join(temp_dir, 'test.py')
         # Write the code under test to code.py
@@ -111,11 +112,11 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
         def set_resource_limits():
             try:
                 # Limit CPU time (e.g., 120 seconds)
-                cpu_time_limit = 120  # seconds
+                cpu_time_limit = 240  # seconds
                 resource.setrlimit(resource.RLIMIT_CPU, (cpu_time_limit, cpu_time_limit))
 
                 # Limit memory usage (e.g., 1 GB)
-                ram_limit = 2048 * 1024 * 1024  # bytes
+                ram_limit = 4096 * 1024 * 1024  # bytes
                 resource.setrlimit(resource.RLIMIT_AS, (ram_limit, ram_limit))
             except Exception as e:
                 print(f"Error setting resource limits: {e}", file=sys.stderr)
@@ -131,10 +132,10 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 preexec_fn=set_resource_limits,
-                timeout=130  # Wall-clock timeout in seconds
+                timeout=300  # Wall-clock timeout in seconds
             )
             output = completed_process.stdout.decode('utf-8')
-
+            # print(output)
             # Print the captured output
             # print("Subprocess Output:")
             # print(output)
@@ -142,7 +143,8 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
             # Parse the unittest output to determine pass/fail counts
             all_passed = completed_process.returncode == 0
             passed, failed = parse_unittest_output(output)
-
+            # print(passed, failed)
+            # print('*'*100)
             return (all_passed, passed, failed, output)
 
         except subprocess.TimeoutExpired:
@@ -238,9 +240,9 @@ def run_unit_tests_parallel(code_str: str, test_list: List[str]):
                      the detailed test output.
     """
     # multiprocessing.set_start_method('spawn')
-    print(f'Processing {len(test_list)} test cases...')
+    # print(f'Processing {len(test_list)} test cases...')
     args = [(test_str, code_str) for test_str in test_list]
-    with multiprocessing.Pool() as pool:
+    with multiprocessing.Pool(5) as pool:
         results = pool.map_async(pool_worker_subprocess, args)
         try:
             # Set a reasonable timeout for all tests to complete
