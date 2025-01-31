@@ -58,11 +58,11 @@ class LogProb:
         self.entropy = entropy
 
     def __str__(self):
-        return f'{self.token}: {self.prob}'
+        return f'{self.token}: {round(self.entropy,1)}'
 
 
 class TestCase:
-    def __init__(self, text, input_logprobs: List[LogProb], output_logprobs: List[LogProb], is_valid: int = None, prediction_is_valid: int = None, prediction_y_prob: int = None, validated_text=None):
+    def __init__(self, text, input_logprobs: List[LogProb], output_logprobs: List[LogProb], all_logprobs : List[LogProb], is_valid: int = None, prediction_is_valid: int = None, prediction_y_prob: int = None, validated_text=None):
         self.text = text
         self.input_logprobs = input_logprobs
         self.output_logprobs = output_logprobs
@@ -70,11 +70,12 @@ class TestCase:
         self.prediction_is_valid = prediction_is_valid
         self.prediction_y_prob = prediction_y_prob
         self.validated_text = validated_text
+        self.all_logprobs = all_logprobs
 
     def __str__(self):
         input_entropy_str = ", ".join([str(lp) for lp in self.input_logprobs])
         output_entropy_str = ", ".join([str(lp) for lp in self.output_logprobs]) if self.output_logprobs else "None"
-        return f'Text: "{self.text}"\nIs Valid: {self.is_valid}\nInput LogProbs: [{input_entropy_str}]\nOutput LogProbs: [{output_entropy_str}]\n'
+        return f'Text: "{self.text}"\nIs Valid: {self.is_valid}\nInput Entropy: [{input_entropy_str}]\nOutput Entropy: [{output_entropy_str}]\n'
 
     def __repr__(self):
         return self.__str__()
@@ -924,14 +925,6 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
             for cls, tests in extracted.items():
                 setup, test = tests[0]
                 sep_tests.append((setup, test))
-                # for idx, (setup, test) in enumerate(tests, 1):
-                #     print(f'--- Test Method {idx} ---')
-                #     print("setUp:")
-                #     print(setup)
-                #     print("Test method:")
-                #     print(test)
-                #     print("--------------------")
-
     else:
         sep_tests = separate_assertions(testcases)
     # print('-----------------------------------------')
@@ -943,10 +936,16 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
         assertions_to_tokens = match_strings_to_tokens_for_unittests_v2(sep_tests, logprobs)
     else:
         assertions_to_tokens =  match_strings_to_tokens(sep_tests, logprobs, dataset)
-    # print(assertions_to_tokens)
-    # if len(assertions_to_tokens) == 0:
-    # print(separated_assertions)
-    # print(logprobs)
+    all_logprobs = []
+    for a_prob in logprobs:
+        all_logprobs.append(
+            LogProb(
+                type=1,
+                token= a_prob[0],
+                prob=np.round(np.exp(a_prob[1]) * 100, 2),
+                entropy=calculate_shannon_entropy(probabilities=[np.exp(p[1]) for p in a_prob[2]])
+            )
+        )
     textcase_index = 0
     test_list = []
     all_tests: List[TestCase] = []
@@ -1005,8 +1004,6 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
             elif "ModuleNotFoundError" in output:
                 module_not_found_errors += 1
             elif "ImportError" in output:
-                print(output)
-                print('*'*100)
                 import_errors += 1
             elif "NameError" in output:
                 # print(output)
@@ -1015,7 +1012,6 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
                 file_not_found += 1
     else:
         is_passed_list = run_test_cases(ground_truth, test_list, timeout=5)
-    # print(f'the pass list is passed: {is_passed_list}')
     for i, is_passed in enumerate(is_passed_list):
         if is_passed:
             is_passed = 1
@@ -1027,6 +1023,7 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
             input_logprobs=data['input_logprobs'],
             output_logprobs=data['output_logprobs'],
             is_valid=is_passed,
+            all_logprobs=all_logprobs,
         )
         all_tests.append(testcase)
 
@@ -1035,91 +1032,6 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
                                  name_error=name_error, file_not_found=file_not_found,
                                  attribute_errors=attribute_errors, module_not_found_errors=module_not_found_errors,
                                  value_errors=value_errors,import_errors=import_errors)
-
-
-def get_logprobs(logprobs, testcases, method_name, ground_truth) -> List[TestCase]:
-    gen = getter(logprobs)
-    all_tests: List[TestCase] = []
-    test_list = []
-    testcase_data_list = []
-    textcase_index = 0
-
-    for logprob in gen:
-        if 'assert' in logprob[0]:
-            for logprob2 in gen:
-                is_break = False
-                if '(' in logprob2[0]:
-                    input_logprobs: List[LogProb] = []
-                    output_logprobs: List[LogProb] = []
-                    second_input_logprobs: List[LogProb] = []
-                    second_output_logprobs: List[LogProb] = []
-
-                    for logprob3 in gen:
-                        if '==' in logprob3[0]:
-                            for logprob4 in gen:
-                                if not validate_string(logprob4[0]):
-                                    continue
-                                elif '#' in logprob4[0] or '\n' in logprob4[0]:  # comment or newline
-                                    break
-                                output_logprobs.append(LogProb(
-                                    type=2,
-                                    token=logprob4[0],
-                                    prob=np.round(np.exp(logprob4[1]) * 100, 2)
-                                ))
-                                second_output_logprobs.append(LogProb(
-                                    type=2,
-                                    token=logprob4[2][1][0],
-                                    prob=np.round(np.exp(logprob4[2][1][1]) * 100, 2)
-                                ))
-
-                            # Collect the function string and associated data
-                            test_list.append(testcases[textcase_index])
-                            testcase_data_list.append({
-                                'text': testcases[textcase_index],
-                                'input_logprobs': input_logprobs,
-                                'output_logprobs': output_logprobs,
-                                'second_input_logprobs': second_input_logprobs,
-                                'second_output_logprobs': second_output_logprobs
-                            })
-                            textcase_index += 1
-                            is_break = True
-                            break
-                        elif logprob3[0] == ',':
-                            continue
-                        else:
-                            if validate_string(logprob3[0]):
-                                input_logprobs.append(LogProb(
-                                    type=1,
-                                    token=logprob3[0],
-                                    prob=np.round(np.exp(logprob3[1]) * 100, 2)
-                                ))
-                                second_input_logprobs.append(LogProb(
-                                    type=1,
-                                    token=logprob3[2][1][0],
-                                    prob=np.round(np.exp(logprob3[2][1][1]) * 100, 2)
-                                ))
-                    if is_break:
-                        break
-            if is_break:
-                continue
-
-    # Run all collected function strings concurrently
-    is_passed_list = run_test_cases(ground_truth, test_list, timeout=5)
-
-    # Create TestCase instances with the results
-    for i, is_passed in enumerate(is_passed_list):
-        data = testcase_data_list[i]
-        testcase = TestCase(
-            text=data['text'],
-            input_logprobs=data['input_logprobs'],
-            output_logprobs=data['output_logprobs'],
-            is_valid=is_passed,
-            second_input_logprobs=data['second_input_logprobs'],
-            second_output_logprobs=data['second_output_logprobs']
-        )
-        all_tests.append(testcase)
-
-    return all_tests
 
 
 def get_all_tests(dataset: str, llm: str) -> List[Function]:
@@ -1187,8 +1099,8 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
             #     for t in testcases:
             #         print(t.text)
             #     print('*'*100)
-            all_errors += errors
-
+            # all_errors += errors
+            # print(testcases)
         except Exception as e:
             # print(e)
             # print('Error processing test cases, skipping...')

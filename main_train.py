@@ -666,7 +666,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--topN",
         type=int,
-        default=5,
+        default=3,
         choices=[0, 1, 2, 3, 5, 7],
         help=f"Specify the top N test cases. Choices are: {1, 2, 3, 5, 7}.",
         required=False
