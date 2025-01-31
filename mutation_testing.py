@@ -217,16 +217,8 @@ def perform_mutation_testing_for_functions(functions_with_tests, dataset):
         for module_name, test_cases in function_modules:
             # print(f"Running mutmut mutation testing for function '{module_name[0]}'...")
             try:
-                mutmut_run = subprocess.run(
-                    [
-                        'mutmut', 'run',
-                        f'--paths-to-mutate=src/{module_name[0]}.py'
-                    ],
-                    capture_output=True,
-                    text=True,
-                    cwd=temp_dir,
-                    timeout=240
-                )
+                mutmut_run = subprocess.run(f'mutmut run --paths-to-mutate=src/{module_name[0]}.py',
+                                            capture_output=True, text=True, cwd=temp_dir, shell=True, timeout=240)
             except subprocess.TimeoutExpired:
                 print(f"Timeout expired for mutmut on module {module_name[0]}.")
                 clean_mutmut_cache()
