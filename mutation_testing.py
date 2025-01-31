@@ -33,7 +33,8 @@ class MutationScore:
 
     def get_total_mutations(self):
         return self.total
-
+    def __str__(self):
+        return f"killed = {self.killed}\nsurvived = {self.survived} \nsuspicious = {self.suspicious}\nskipped= {self.skipped}\ntimeout = {self.timeout}"
 def find_mut_score(log:str):
     lines = log.strip().split('\n')
 
@@ -226,12 +227,6 @@ def perform_mutation_testing_for_functions(functions_with_tests, dataset):
                 continue
 
             result = mutmut_run.stdout
-            if mutmut_run.returncode != 0:
-                # print(f"Mutmut encountered an error for module {module_name[0]}.")
-                # print(mutmut_run.stderr)
-                clean_mutmut_cache()
-                continue
-
             # Parse the results
             scores = find_mut_score(result)
             if scores is None:
@@ -245,6 +240,7 @@ def perform_mutation_testing_for_functions(functions_with_tests, dataset):
             mutation_counters['total_timeout'] += scores.timeout
             mutation_counters['total_suspicious'] += scores.suspicious
             mutation_counters['total_survived'] += scores.survived
+            # print(mutation_counters)
 
             # Clean mutmut cache after processing
             clean_mutmut_cache()
