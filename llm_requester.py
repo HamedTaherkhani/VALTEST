@@ -141,7 +141,7 @@ class HuggingfaceRequester(LLMRequester):
     def get_completion(self, messages, **kwargs):
         prompt = ''.join([message['content'] for message in messages])
         input_ids = self.tokenizer.encode(prompt, return_tensors='pt').to(self.device)
-        max_length = kwargs.get('max_tokens', 600) + input_ids.shape[1]
+        max_length = kwargs.get('max_tokens', 2000) + input_ids.shape[1]
         inputs = self.tokenizer(
             prompt,
             return_tensors="pt",  # Return as PyTorch tensors
