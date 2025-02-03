@@ -3,12 +3,12 @@ import copy
 import numpy as np
 import pandas as pd
 from main_train import StatisticalFeatureExtraction, extract_features, prepare_data, balance_data, train_and_evaluate, remove_unnecessary_functions, evaluate_function
-from generate_testcases import RawLogProbs
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score
 import joblib
 
-from log_probs import get_all_tests
+from log_probs import get_all_tests, RawLogProbs
+
 
 def evaluate_dataset_with_model(dataset: str, llm: str, mutation:False,
                                 threshold: float = 0.8, topN: int = 5,

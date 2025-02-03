@@ -117,13 +117,15 @@ def extract_python_code(text):
         matches = re.findall(pattern, text, re.DOTALL)
     except Exception:
         return text
-    return matches[0]
-
+    try:
+        return matches[0]
+    except IndexError:
+        return text
 
 def process_unit_testcases(f, testcase, client, llm):
     prompt = f"""
     You will receive a function description and a python unittest designed to test the the function. Your task is to find any issues with the test case and verify it's correctness according to the function specification.
-    Use detailed, step-by-step reasoning to check the correctness of the unit test. After validating, adjust the test case as necessary. Finally, present the validated test case enclosed within exactly ***```python and ```*** tags.
+    Use detailed, step-by-step reasoning to check the correctness of the unit test. After reasoning, adjust the test case as necessary. Finally, present the validated test case enclosed within exactly ***```python and ```*** tags.
     Do not include anything else inside the asterisks—only the testcase. Don't use subprocess, multiprocessing or concurrent libraries. Also don't add any more assertions in the test case. And don't make the test stricter. Loosen the test case to make them assertions less restrictive if you are not sure about the expected output of the assertions in the test case.
     Function Description:
     {f.prompt}
@@ -164,14 +166,17 @@ Function Description:
 Test Case:
 {testcase.text}
 """
-
-    response_text = client.chat_completion(
-        model_name=llm,
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=1000,
-        temperature=0,
-        seed=123,
-    )
+    try:
+        response_text = client.chat_completion(
+            model_name=llm,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1000,
+            temperature=0,
+            seed=123,
+        )
+    except Exception:
+        print("Exception in api")
+        return
     if response_text is None:
         return
     # Extract the validated assertion from the LLM's response

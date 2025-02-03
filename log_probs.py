@@ -8,7 +8,6 @@ from tqdm import tqdm
 import re
 import ast
 from typing import List, Tuple, Optional
-from generate_testcases import RawLogProbs
 from dataclasses import dataclass
 
 @dataclass
@@ -43,6 +42,31 @@ class ErrorTypes:
         print('name error:',self.name_error)
         print('file not found:',self.file_not_found)
         return ''
+
+class RawLogProbs:
+    def __init__(self, prompt: str, logprobs: dict, dataset: str, id: str, testcases: List[str], solution: str, test_type: int):
+        self.prompt = prompt
+        self.logprobs = logprobs
+        self.dataset = dataset
+        self.id = id
+        self.testcases = testcases
+        self.solution = solution
+        self.test_type = test_type
+
+    def __str__(self):
+        return (
+            f"RawLogProbs(\n"
+            f"  Prompt: {self.prompt}\n"
+            f"  logprobs: {[s[0] for s in self.logprobs]}\n"
+            f"  Dataset: {self.dataset}\n"
+            f"  ID: {self.id}\n"
+            f"  Testcases: {self.testcases}\n"
+            f"  Solution: {self.solution}\n"
+            f")"
+        )
+
+    def __repr__(self):
+        return self.__str__()
 
 class LogProb:
     def __init__(self, type, token, prob, entropy):

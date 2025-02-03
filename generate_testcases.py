@@ -13,34 +13,10 @@ from loaders.livecodebench_loader2 import LiveCodeBenchLoader2
 # from BigCodeLoader import BigCodeLoader
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from loaders.BigCodeLoader import BigCodeLoader
+from log_probs import RawLogProbs ,Function, TestCase, LogProb
 from prompts import PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, \
     PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench
 # Define an abstract base class for LLM requesters
-
-class RawLogProbs:
-    def __init__(self, prompt: str, logprobs: dict, dataset: str, id: str, testcases: List[str], solution: str, test_type: int):
-        self.prompt = prompt
-        self.logprobs = logprobs
-        self.dataset = dataset
-        self.id = id
-        self.testcases = testcases
-        self.solution = solution
-        self.test_type = test_type
-
-    def __str__(self):
-        return (
-            f"RawLogProbs(\n"
-            f"  Prompt: {self.prompt}\n"
-            f"  logprobs: {[s[0] for s in self.logprobs]}\n"
-            f"  Dataset: {self.dataset}\n"
-            f"  ID: {self.id}\n"
-            f"  Testcases: {self.testcases}\n"
-            f"  Solution: {self.solution}\n"
-            f")"
-        )
-
-    def __repr__(self):
-        return self.__str__()
 
 
 def correct_indentation(code):

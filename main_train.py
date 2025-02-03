@@ -64,7 +64,7 @@ def calculate_perplexity(probabilities):
 
 # Concrete Strategy for Statistical Feature Extraction
 class StatisticalFeatureExtraction(FeatureExtractionStrategy):
-    def __init__(self, use_entropy=False):
+    def __init__(self, use_entropy=True):
         self.use_entropy = use_entropy
 
     def extract_features(self, log_probs: List[LogProb]) -> dict:
@@ -150,22 +150,28 @@ class ModelFactory:
 
 # Function to extract features from TestCases
 def extract_features(test_cases: List[TestCase], function_ids: List[int], strategy: FeatureExtractionStrategy,
-                     feature_sets: str = 'all') -> List[dict]:
+                     feature_sets: str = 'all' , approach='semantic_entropy') -> List[dict]:
     features = []
-
+    # print(approach)
     for test_case, func_id in zip(test_cases, function_ids):
+        if approach == 'semantic_entropy':
         # Extract input features and add a prefix to each key
-        input_features = {f'input_{k}': v for k, v in strategy.extract_features(test_case.input_logprobs).items()}
-        # Extract output features and add a prefix to each key
-        output_features = {f'output_{k}': v for k, v in strategy.extract_features(test_case.output_logprobs).items()}
-        # Based on feature_sets argument, combine relevant features
-        if feature_sets == 'input':
-            combined_features = {**input_features}
-        elif feature_sets == 'output':
-            combined_features = {**output_features}
-        else:  # 'all'
-            combined_features = {**input_features, **output_features}
-
+            input_features = {f'input_{k}': v for k, v in strategy.extract_features(test_case.input_logprobs).items()}
+            # Extract output features and add a prefix to each key
+            output_features = {f'output_{k}': v for k, v in strategy.extract_features(test_case.output_logprobs).items()}
+            # Based on feature_sets argument, combine relevant features
+            if feature_sets == 'input':
+                combined_features = {**input_features}
+            elif feature_sets == 'output':
+                combined_features = {**output_features}
+            else:  # 'all'
+                combined_features = {**input_features, **output_features}
+        elif approach == 'naive_entropy':
+            all_features = {f'feature_{k}': v for k,v in strategy.extract_features(test_case.all_logprobs).items()}
+            combined_features = {**all_features}
+        else:
+            print('Invalid approach')
+            raise ValueError
         # Add 'is_valid' and 'function_id' to the feature set
         combined_features['is_valid'] = test_case.is_valid
         combined_features['function_id'] = func_id
@@ -545,10 +551,9 @@ def remove_unnecessary_functions(functions):
     print(len(functions))
     return functions
 
-def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, feature_sets='all', use_entropy=False):
+def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, feature_sets='all', approach='semantic_entropy'):
     print('Extracting testcases and running them...')
     functions = get_all_tests(dataset, llm)
-
     functions = remove_unnecessary_functions(functions)
     # print(functions)
     # return
@@ -561,8 +566,8 @@ def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, fea
             function_ids.append(func_id)
             test_case_ids.append((func_id, test_idx))  # Assign unique ID
 
-    strategy = StatisticalFeatureExtraction(use_entropy=use_entropy)
-    features = extract_features(all_testcases, function_ids, strategy, feature_sets)
+    strategy = StatisticalFeatureExtraction(use_entropy=True)
+    features = extract_features(all_testcases, function_ids, strategy, feature_sets, approach)
     print(features[0])
     # visualize_features(features)
     X, y, groups = prepare_data(features)  # Now returns groups
@@ -603,8 +608,18 @@ def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, fea
     models_performance[model_name] = {
         'coverage': coverage,
         'total_selected': total_selected,
-        'valid_test_case_ration': ratio
+        'valid_test_case_ration': ratio,
     }
+    TP = round(total_selected*ratio)
+    FP = total_selected - TP
+    FN = true_count_balanced - TP
+    TN = false_count_balanced - FP
+    precision = TP/(TP+FP)
+    recall = TP/(TP+FN)
+    f1_score = 2*precision*recall/(precision+recall)
+    print('precision: {:.2f}'.format(precision))
+    print('recall: {:.2f}'.format(recall))
+    print('f1_score: {:.2f}'.format(f1_score))
     print(models_performance)
 
     ## Saving functions with prediction values
@@ -680,18 +695,18 @@ if __name__ == "__main__":
         required=False
     )
     parser.add_argument(
-        "--use_entropy",
-        type=bool,
-        default=False,
-        choices=[True, False],
+        "--approach",
+        type=str,
+        default='semantic_entropy',
+        choices=['semantic_entropy', 'naive_entropy'],
         required=False,
     )
     args = parser.parse_args()
-    file_name = f'output/{args.dataset}_{args.llm}.txt'
+    file_name = f'output/{args.dataset}_{args.llm}_{args.approach}.txt'
     # file_name = f'output/RQ2/{args.dataset}_{args.llm}_{args.threshold}_{args.topN}.txt'
     # file_name = f'output/RQ3/second_output/{args.dataset}_{args.llm}_{args.features}.txt'
     print(f'Writing the output to {file_name}')
     with open(file_name, 'w') as f:
         orig_stdout = sys.stdout
         sys.stdout = f
-        main(args.dataset, args.llm, args.mutation, args.threshold, args.topN, args.features, args.use_entropy)
+        main(args.dataset, args.llm, args.mutation, args.threshold, args.topN, args.features, args.approach)
