@@ -1,0 +1,108 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/MBPP_llama3_processed.pkl...
+403
+403
+{'input_mean': 1.8274100693717177, 'input_max': 1.9616758280653317, 'input_min': 1.693144310678104, 'input_sum': 3.6548201387434354, 'input_total': 2, 'input_variance': 0.018027293957571758, 'output_mean': 0.016251512966929317, 'output_max': 0.016251512966929317, 'output_min': 0.016251512966929317, 'output_sum': 0.016251512966929317, 'output_total': 1, 'output_variance': 0.0, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 2382
+Balanced dataset size - Number of invalid testcases: 2079
+Valid Testcase Ratio" 0.53
+calculating initial coverage of the functions and mutation score....
+coverage: 0.773
+The total number of tests for mutation testing: 2382
+running mutation testing...
+Failed to parse mutmut results for module merge.
+Failed to parse mutmut results for module is_upper.
+Failed to parse mutmut results for module consecutive_duplicates.
+Failed to parse mutmut results for module pack_consecutive_duplicates.
+Failed to parse mutmut results for module right_insertion.
+Failed to parse mutmut results for module count_list.
+Failed to parse mutmut results for module max_sum_list.
+Failed to parse mutmut results for module smallest_num.
+Failed to parse mutmut results for module count.
+Failed to parse mutmut results for module combinations_colors.
+Failed to parse mutmut results for module split_two_parts.
+Failed to parse mutmut results for module is_lower.
+Failed to parse mutmut results for module split.
+Failed to parse mutmut results for module tuple_size.
+Final Mutation Testing Results:
+Total mutants: 2629
+Killed mutants: 1892
+Survived mutants: 705
+Timeout mutants: 32
+Suspicious mutants: 0
+Overall Mutation Score: 71.97%
+Initial coverage:
+0.773
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 1936, number of negative: 1632
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.001218 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2607
+[LightGBM] [Info] Number of data points in the train set: 3568, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.542601 -> initscore=0.170818
+[LightGBM] [Info] Start training from score 0.170818
+[LightGBM] [Info] Number of positive: 1962, number of negative: 1607
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.001328 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2607
+[LightGBM] [Info] Number of data points in the train set: 3569, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.549734 -> initscore=0.199595
+[LightGBM] [Info] Start training from score 0.199595
+[LightGBM] [Info] Number of positive: 1893, number of negative: 1676
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.002580 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2603
+[LightGBM] [Info] Number of data points in the train set: 3569, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.530401 -> initscore=0.121753
+[LightGBM] [Info] Start training from score 0.121753
+[LightGBM] [Info] Number of positive: 1841, number of negative: 1728
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.004387 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2609
+[LightGBM] [Info] Number of data points in the train set: 3569, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.515831 -> initscore=0.063344
+[LightGBM] [Info] Start training from score 0.063344
+[LightGBM] [Info] Number of positive: 1896, number of negative: 1673
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.001377 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2608
+[LightGBM] [Info] Number of data points in the train set: 3569, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.531241 -> initscore=0.125128
+[LightGBM] [Info] Start training from score 0.125128
+Model: ensemble
+Threshold: 0.75
+=== Selection Statistics ===
+Total selected instances: 1202
+The ratio valid test cases: 0.61
+============================
+Calculating coverage and mutation score using filtered test cases...
+coverage: 0.672
+The total number of tests for mutation testing: 733
+running mutation testing...
+Failed to parse mutmut results for module merge.
+Failed to parse mutmut results for module is_upper.
+Failed to parse mutmut results for module consecutive_duplicates.
+Failed to parse mutmut results for module pack_consecutive_duplicates.
+Failed to parse mutmut results for module right_insertion.
+Failed to parse mutmut results for module count_list.
+Failed to parse mutmut results for module max_sum_list.
+Failed to parse mutmut results for module smallest_num.
+Failed to parse mutmut results for module count.
+Failed to parse mutmut results for module combinations_colors.
+Failed to parse mutmut results for module split_two_parts.
+Failed to parse mutmut results for module is_lower.
+Failed to parse mutmut results for module split.
+Failed to parse mutmut results for module tuple_size.
+Final Mutation Testing Results:
+Total mutants: 2268
+Killed mutants: 1380
+Survived mutants: 845
+Timeout mutants: 29
+Suspicious mutants: 14
+Overall Mutation Score: 60.85%
+precision: 0.61
+recall: 0.31
+f1_score: 0.41
+{'ensemble': {'coverage': 0.672, 'total_selected': 1202, 'valid_test_case_ration': 0.61}}
+Saving filtered functions to filtered_testcases/MBPP_llama3.pkl...
