@@ -4,8 +4,8 @@ import subprocess
 import sys
 import shutil
 import re
+import multiprocessing
 from tqdm import tqdm
-
 
 def show_mutant_diff(mutants_list):
     """Display the diffs for all generated mutants."""
@@ -60,23 +60,51 @@ def find_mut_score(log:str):
         return score
     return None
 
+def worker_func(args):
+    """
+    A simple wrapper that unpacks arguments and calls
+    `perform_mutation_testing_for_functions`.
+    """
+    func_chunk, dataset = args
+    return perform_mutation_testing_for_functions(func_chunk, dataset)
+
 
 def perform_overall_mutation_testing(functions_with_tests, dataset, chunk_size=10):
-    separated_functions = [functions_with_tests[i:i + chunk_size] for i in range(0, len(functions_with_tests), chunk_size)]
-    total_mutants = total_killed = total_survived = total_timeout = total_suspicious = 0
+    # Split your functions into chunks
+    separated_functions = [
+        functions_with_tests[i : i + chunk_size]
+        for i in range(0, len(functions_with_tests), chunk_size)
+    ]
 
-    for function in tqdm(separated_functions):
-        mutants, killed, survived, timeout, suspicious = perform_mutation_testing_for_functions(function, dataset)
-        total_mutants += mutants
-        total_killed += killed
-        total_survived += survived
-        total_timeout += timeout
-        total_suspicious += suspicious
+    total_mutants = 0
+    total_killed = 0
+    total_survived = 0
+    total_timeout = 0
+    total_suspicious = 0
+
+    # 2) Use the top-level worker in the Pool
+    #    For Windows compatibility, ensure this is guarded under "if __name__ == '__main__'"
+    with multiprocessing.Pool() as pool:
+        # Prepare the arguments as (chunk, dataset) pairs
+        args_for_pool = [(chunk, dataset) for chunk in separated_functions]
+
+        # imap gives an iterator of results we can loop over in sync with tqdm
+        for (mutants, killed, survived, timeout, suspicious) in tqdm(
+            pool.imap(worker_func, args_for_pool),
+            total=len(args_for_pool),
+            desc="Mutation Testing Chunks"
+        ):
+            total_mutants += mutants
+            total_killed += killed
+            total_survived += survived
+            total_timeout += timeout
+            total_suspicious += suspicious
 
     if total_mutants == 0:
         overall_mutation_score = 0.0
     else:
         overall_mutation_score = (total_killed / total_mutants) * 100
+
     print("Final Mutation Testing Results:")
     print(f"Total mutants: {total_mutants}")
     print(f"Killed mutants: {total_killed}")
