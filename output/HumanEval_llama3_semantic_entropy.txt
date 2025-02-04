@@ -1,0 +1,92 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/HumanEval_llama3_processed.pkl...
+123
+119
+{'input_mean': 0.04811496915514805, 'input_max': 0.26129217704371555, 'input_min': 0.0002651127588649017, 'input_sum': 0.5773796298617766, 'input_total': 12, 'input_variance': 0.005806424782716348, 'output_mean': 0.006678593584834907, 'output_max': 0.006678593584834907, 'output_min': 0.006678593584834907, 'output_sum': 0.006678593584834907, 'output_total': 1, 'output_variance': 0.0, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 1545
+Balanced dataset size - Number of invalid testcases: 914
+Valid Testcase Ratio" 0.63
+calculating initial coverage of the functions and mutation score....
+coverage: 0.932
+The total number of tests for mutation testing: 1545
+running mutation testing...
+Failed to parse mutmut results for module filter_integers.
+Failed to parse mutmut results for module strlen.
+Failed to parse mutmut results for module flip_case.
+Failed to parse mutmut results for module filter_by_prefix.
+Failed to parse mutmut results for module unique.
+Failed to parse mutmut results for module count_distinct_characters.
+Final Mutation Testing Results:
+Total mutants: 1326
+Killed mutants: 1058
+Survived mutants: 247
+Timeout mutants: 21
+Suspicious mutants: 0
+Overall Mutation Score: 79.79%
+Initial coverage:
+0.932
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 1286, number of negative: 681
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000163 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2591
+[LightGBM] [Info] Number of data points in the train set: 1967, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.653787 -> initscore=0.635730
+[LightGBM] [Info] Start training from score 0.635730
+[LightGBM] [Info] Number of positive: 1164, number of negative: 803
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000141 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2596
+[LightGBM] [Info] Number of data points in the train set: 1967, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.591764 -> initscore=0.371263
+[LightGBM] [Info] Start training from score 0.371263
+[LightGBM] [Info] Number of positive: 1221, number of negative: 746
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000109 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2594
+[LightGBM] [Info] Number of data points in the train set: 1967, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.620742 -> initscore=0.492700
+[LightGBM] [Info] Start training from score 0.492700
+[LightGBM] [Info] Number of positive: 1241, number of negative: 726
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000121 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2597
+[LightGBM] [Info] Number of data points in the train set: 1967, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.630910 -> initscore=0.536123
+[LightGBM] [Info] Start training from score 0.536123
+[LightGBM] [Info] Number of positive: 1268, number of negative: 700
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000123 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2594
+[LightGBM] [Info] Number of data points in the train set: 1968, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.644309 -> initscore=0.594116
+[LightGBM] [Info] Start training from score 0.594116
+Model: ensemble
+Threshold: 0.75
+=== Selection Statistics ===
+Total selected instances: 645
+The ratio valid test cases: 0.769
+============================
+Calculating coverage and mutation score using filtered test cases...
+coverage: 0.866
+The total number of tests for mutation testing: 496
+running mutation testing...
+Failed to parse mutmut results for module filter_integers.
+Failed to parse mutmut results for module strlen.
+Failed to parse mutmut results for module flip_case.
+Failed to parse mutmut results for module filter_by_prefix.
+Failed to parse mutmut results for module unique.
+Failed to parse mutmut results for module count_distinct_characters.
+Final Mutation Testing Results:
+Total mutants: 1272
+Killed mutants: 796
+Survived mutants: 465
+Timeout mutants: 11
+Suspicious mutants: 0
+Overall Mutation Score: 62.58%
+precision: 0.77
+recall: 0.32
+f1_score: 0.45
+{'ensemble': {'coverage': 0.866, 'total_selected': 645, 'valid_test_case_ration': 0.769}}
+Saving filtered functions to filtered_testcases/HumanEval_llama3.pkl...
