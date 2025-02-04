@@ -1,51 +1,58 @@
 Extracting testcases and running them...
 Loading processed functions from unfiltered_testcases/LeetCode_gpt-3.5-turbo_processed.pkl...
+528
 526
-526
-{'input_mean': 99.992, 'input_max': 100.0, 'input_min': 99.98, 'input_sum': 499.96000000000004, 'input_total': 5, 'input_variance': 5.5999999999989096e-05, 'second_input_mean': 0.004, 'second_input_max': 0.02, 'second_input_min': 0.0, 'second_input_sum': 0.02, 'second_input_total': 5, 'second_input_variance': 6.400000000000001e-05, 'is_valid': 1, 'function_id': 0}
+{'input_mean': 0.00114605774583209, 'input_max': 0.0034629768268715885, 'input_min': 4.274122953690821e-05, 'input_sum': 0.00573028872916045, 'input_total': 5, 'input_variance': 1.5103944523652584e-06, 'is_valid': 1, 'function_id': 0}
 Balanced dataset size - Number of valid testcases: 5134
 Balanced dataset size - Number of invalid testcases: 3080
 Valid Testcase Ratio" 0.63
+calculating initial coverage of the functions and mutation score....
 
 Training and evaluating model: ensemble
 [LightGBM] [Info] Number of positive: 4066, number of negative: 2505
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000777 seconds.
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000098 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2578
-[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 12
+[LightGBM] [Info] Total Bins 1313
+[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 6
 [LightGBM] [Info] [binary:BoostFromScore]: pavg=0.618779 -> initscore=0.484371
 [LightGBM] [Info] Start training from score 0.484371
 [LightGBM] [Info] Number of positive: 4134, number of negative: 2437
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000202 seconds.
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000173 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2590
-[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 12
+[LightGBM] [Info] Total Bins 1318
+[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 6
 [LightGBM] [Info] [binary:BoostFromScore]: pavg=0.629128 -> initscore=0.528478
 [LightGBM] [Info] Start training from score 0.528478
 [LightGBM] [Info] Number of positive: 4133, number of negative: 2438
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000156 seconds.
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000091 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2592
-[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 12
+[LightGBM] [Info] Total Bins 1319
+[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 6
 [LightGBM] [Info] [binary:BoostFromScore]: pavg=0.628976 -> initscore=0.527826
 [LightGBM] [Info] Start training from score 0.527826
 [LightGBM] [Info] Number of positive: 4145, number of negative: 2426
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000151 seconds.
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000168 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2588
-[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 12
+[LightGBM] [Info] Total Bins 1318
+[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 6
 [LightGBM] [Info] [binary:BoostFromScore]: pavg=0.630802 -> initscore=0.535659
 [LightGBM] [Info] Start training from score 0.535659
 [LightGBM] [Info] Number of positive: 4058, number of negative: 2514
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000186 seconds.
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000106 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2589
-[LightGBM] [Info] Number of data points in the train set: 6572, number of used features: 12
+[LightGBM] [Info] Total Bins 1319
+[LightGBM] [Info] Number of data points in the train set: 6572, number of used features: 6
 [LightGBM] [Info] [binary:BoostFromScore]: pavg=0.617468 -> initscore=0.478815
 [LightGBM] [Info] Start training from score 0.478815
 Model: ensemble
-Threshold: 0.8
+Threshold: 0.75
 === Selection Statistics ===
-Total selected instances: 2397
-The ratio valid test cases: 0.781
+Total selected instances: 1773
+The ratio valid test cases: 0.844
 ============================
+Calculating coverage and mutation score using filtered test cases...
+precision: 0.84
+recall: 0.29
+f1_score: 0.43
+{'ensemble': {'total_selected': 1773, 'valid_test_case_ration': 0.844}}
+Saving filtered functions to filtered_testcases/LeetCode_gpt-3.5-turbo.pkl...

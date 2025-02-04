@@ -1,51 +1,58 @@
 Extracting testcases and running them...
 Loading processed functions from unfiltered_testcases/MBPP_gpt-3.5-turbo_processed.pkl...
-413
-413
-{'input_mean': 82.87, 'input_max': 82.87, 'input_min': 82.87, 'input_sum': 82.87, 'input_total': 1, 'input_variance': 0.0, 'second_input_mean': 5.48, 'second_input_max': 5.48, 'second_input_min': 5.48, 'second_input_sum': 5.48, 'second_input_total': 1, 'second_input_variance': 0.0, 'is_valid': 1, 'function_id': 0}
-Balanced dataset size - Number of valid testcases: 3559
-Balanced dataset size - Number of invalid testcases: 2364
+415
+414
+{'input_mean': 0.8796877546791824, 'input_max': 0.8796877546791824, 'input_min': 0.8796877546791824, 'input_sum': 0.8796877546791824, 'input_total': 1, 'input_variance': 0.0, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 3563
+Balanced dataset size - Number of invalid testcases: 2371
 Valid Testcase Ratio" 0.6
+calculating initial coverage of the functions and mutation score....
 
 Training and evaluating model: ensemble
-[LightGBM] [Info] Number of positive: 2881, number of negative: 1857
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000150 seconds.
+[LightGBM] [Info] Number of positive: 2858, number of negative: 1889
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000172 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2595
-[LightGBM] [Info] Number of data points in the train set: 4738, number of used features: 12
-[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.608062 -> initscore=0.439175
-[LightGBM] [Info] Start training from score 0.439175
-[LightGBM] [Info] Number of positive: 2779, number of negative: 1959
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000138 seconds.
+[LightGBM] [Info] Total Bins 1309
+[LightGBM] [Info] Number of data points in the train set: 4747, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.602064 -> initscore=0.414074
+[LightGBM] [Info] Start training from score 0.414074
+[LightGBM] [Info] Number of positive: 2895, number of negative: 1852
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000087 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2594
-[LightGBM] [Info] Number of data points in the train set: 4738, number of used features: 12
-[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.586534 -> initscore=0.349657
-[LightGBM] [Info] Start training from score 0.349657
-[LightGBM] [Info] Number of positive: 2854, number of negative: 1884
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000143 seconds.
+[LightGBM] [Info] Total Bins 1310
+[LightGBM] [Info] Number of data points in the train set: 4747, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.609859 -> initscore=0.446719
+[LightGBM] [Info] Start training from score 0.446719
+[LightGBM] [Info] Number of positive: 2847, number of negative: 1900
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000083 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2597
-[LightGBM] [Info] Number of data points in the train set: 4738, number of used features: 12
-[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.602364 -> initscore=0.415324
-[LightGBM] [Info] Start training from score 0.415324
-[LightGBM] [Info] Number of positive: 2875, number of negative: 1864
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000144 seconds.
+[LightGBM] [Info] Total Bins 1309
+[LightGBM] [Info] Number of data points in the train set: 4747, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.599747 -> initscore=0.404412
+[LightGBM] [Info] Start training from score 0.404412
+[LightGBM] [Info] Number of positive: 2816, number of negative: 1931
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000190 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2598
-[LightGBM] [Info] Number of data points in the train set: 4739, number of used features: 12
-[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.606668 -> initscore=0.433328
-[LightGBM] [Info] Start training from score 0.433328
-[LightGBM] [Info] Number of positive: 2847, number of negative: 1892
-[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000169 seconds.
+[LightGBM] [Info] Total Bins 1311
+[LightGBM] [Info] Number of data points in the train set: 4747, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.593217 -> initscore=0.377279
+[LightGBM] [Info] Start training from score 0.377279
+[LightGBM] [Info] Number of positive: 2836, number of negative: 1912
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000229 seconds.
 You can set `force_col_wise=true` to remove the overhead.
-[LightGBM] [Info] Total Bins 2590
-[LightGBM] [Info] Number of data points in the train set: 4739, number of used features: 12
-[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.600760 -> initscore=0.408631
-[LightGBM] [Info] Start training from score 0.408631
+[LightGBM] [Info] Total Bins 1310
+[LightGBM] [Info] Number of data points in the train set: 4748, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.597304 -> initscore=0.394245
+[LightGBM] [Info] Start training from score 0.394245
 Model: ensemble
-Threshold: 0.8
+Threshold: 0.75
 === Selection Statistics ===
-Total selected instances: 2005
-The ratio valid test cases: 0.613
+Total selected instances: 1218
+The ratio valid test cases: 0.603
 ============================
+Calculating coverage and mutation score using filtered test cases...
+precision: 0.60
+recall: 0.21
+f1_score: 0.31
+{'ensemble': {'total_selected': 1218, 'valid_test_case_ration': 0.603}}
+Saving filtered functions to filtered_testcases/MBPP_gpt-3.5-turbo.pkl...
