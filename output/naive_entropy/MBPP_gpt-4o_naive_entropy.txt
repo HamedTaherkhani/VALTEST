@@ -1,0 +1,80 @@
+Extracting testcases and running them...
+the dataset length is 425
+Unsupported assertion format: assert filter_data
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(4) - 2) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(9) - 3) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(16) - 4) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(25) - 5) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(0) - 0) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(1) - 1) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(2) - 1.41421356237) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(0.25) - 0.5) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(0.01) - 0.1) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(100) - 10) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(10000) - 100) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(123456789) - 11111.111060555555) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(0.0001) - 0.01) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(0.00000001) - 0.0001) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(50) - 7.07106781187) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(0.5) - 0.70710678118) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(1234.56789) - 35.136306) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(987654321) - 31426.968052932) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(0.333333333) - 0.57735026919) < 1e-10
+Unsupported comparison operator in assertion: assert abs(babylonian_squareroot(0.666666667) - 0.81649658093) < 1e-10
+Saving processed functions to unfiltered_testcases/MBPP_gpt-4o_processed.pkl...
+425
+423
+{'feature_mean': 0.25530836831100295, 'feature_max': 2.051859912795653, 'feature_min': 1.1500194407048192e-08, 'feature_sum': 68.9332594439708, 'feature_total': 270, 'feature_variance': 0.2536416559840549, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 5456
+Balanced dataset size - Number of invalid testcases: 2294
+Valid Testcase Ratio" 0.7
+calculating initial coverage of the functions and mutation score....
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 4310, number of negative: 1890
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000111 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 1474
+[LightGBM] [Info] Number of data points in the train set: 6200, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.695161 -> initscore=0.824361
+[LightGBM] [Info] Start training from score 0.824361
+[LightGBM] [Info] Number of positive: 4394, number of negative: 1806
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.031033 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 1476
+[LightGBM] [Info] Number of data points in the train set: 6200, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.708710 -> initscore=0.889126
+[LightGBM] [Info] Start training from score 0.889126
+[LightGBM] [Info] Number of positive: 4352, number of negative: 1848
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.001156 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 1475
+[LightGBM] [Info] Number of data points in the train set: 6200, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.701935 -> initscore=0.856532
+[LightGBM] [Info] Start training from score 0.856532
+[LightGBM] [Info] Number of positive: 4409, number of negative: 1791
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000133 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 1480
+[LightGBM] [Info] Number of data points in the train set: 6200, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.711129 -> initscore=0.900874
+[LightGBM] [Info] Start training from score 0.900874
+[LightGBM] [Info] Number of positive: 4359, number of negative: 1841
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000098 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 1484
+[LightGBM] [Info] Number of data points in the train set: 6200, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.703065 -> initscore=0.861934
+[LightGBM] [Info] Start training from score 0.861934
+Model: ensemble
+Threshold: 0.75
+=== Selection Statistics ===
+Total selected instances: 3812
+The ratio valid test cases: 0.755
+============================
+Calculating coverage and mutation score using filtered test cases...
+precision: 0.75
+recall: 0.53
+f1_score: 0.62
+{'ensemble': {'total_selected': 3812, 'valid_test_case_ration': 0.755}}
+Saving filtered functions to filtered_testcases/MBPP_gpt-4o.pkl...
