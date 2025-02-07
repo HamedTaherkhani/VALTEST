@@ -5,6 +5,7 @@ import sys
 import shutil
 import re
 import multiprocessing
+import ast
 from tqdm import tqdm
 
 def show_mutant_diff(mutants_list):
@@ -205,7 +206,13 @@ def perform_mutation_testing_for_functions(functions_with_tests, dataset):
     try:
         os.chdir(temp_dir)
         os.environ['PYTHONPATH'] = temp_dir
-
+        mutation_counters = {
+            'total_mutants': 0,
+            'total_killed': 0,
+            'total_timeout': 0,
+            'total_suspicious': 0,
+            'total_survived': 0
+        }
         # Set up environment and create necessary files for testing
         function_modules = make_files_for_testing(temp_dir, functions_with_tests, dataset)
 
@@ -219,22 +226,22 @@ def perform_mutation_testing_for_functions(functions_with_tests, dataset):
         )
 
         if pytest_result.returncode != 0:
+            return (
+            mutation_counters['total_mutants'],
+            mutation_counters['total_killed'],
+            mutation_counters['total_survived'],
+            mutation_counters['total_timeout'],
+            mutation_counters['total_suspicious']
+            )
             # print("Tests failed. Output:")
             # print(pytest_result.stdout)
             # print(pytest_result.stderr)
-            print("Proceeding with mutation testing despite test failures.\n")
+            # print("Proceeding with mutation testing despite test failures.\n")
         else:
             pass
             # print("All tests passed.\n")
 
         # Initialize mutation testing counters
-        mutation_counters = {
-            'total_mutants': 0,
-            'total_killed': 0,
-            'total_timeout': 0,
-            'total_suspicious': 0,
-            'total_survived': 0
-        }
 
         # Helper function to clean mutmut cache
         def clean_mutmut_cache():
@@ -305,16 +312,26 @@ def perform_mutation_testing_for_functions(functions_with_tests, dataset):
         shutil.rmtree(temp_dir)
         # print(f"Cleaned up temporary directory: {temp_dir}")
 
-def get_top_level_function_names(func_str):
-    # Regular expression to match top-level function definitions (without leading indentation)
-    pattern = r"^def\s+(\w+)\s*\((.*?)\)(?:\s*->\s*.*)?\s*:"
 
-    # Find all matches
-    matches = re.findall(pattern, func_str, re.MULTILINE)
 
-    # Extract the function names from the matches
-    if matches:
-        func_names = [match[0] for match in matches]
-        return func_names
-    else:
-        return []
+def get_top_level_function_names(source_code):
+    """
+    Parse the given source code and return a list of top-level function names.
+
+    Parameters:
+        source_code (str): A string containing Python source code.
+
+    Returns:
+        List[str]: A list of names for all top-level function definitions.
+    """
+    # Parse the source code into an AST
+    tree = ast.parse(source_code)
+
+    # Iterate through the top-level nodes in the AST
+    top_level_funcs = [
+        node.name
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef)
+    ]
+
+    return top_level_funcs

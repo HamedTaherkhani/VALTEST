@@ -3,6 +3,8 @@ import argparse
 import sys
 import re
 import os
+import multiprocessing
+from tqdm import tqdm
 from typing import List
 from loaders.humaneval_loader import HumanEvalLoader
 from loaders.MBPPLoader import MBPPLoader
@@ -15,7 +17,7 @@ from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from loaders.BigCodeLoader import BigCodeLoader
 from log_probs import RawLogProbs ,Function, TestCase, LogProb
 from prompts import PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, \
-    PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench
+    PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench, PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench_second_run
 # Define an abstract base class for LLM requesters
 
 
@@ -66,7 +68,36 @@ def separate_python_code_blocks(text: str) -> List[str]:
     return [block.strip() for block in code_blocks]
 
 
-def generate_testcases(dataset_choice, llm_name):
+def is_syntax_valid(code: str, func_name) -> bool:
+    try:
+        ast.parse(code)
+        if func_name is not None:
+            if func_name in code:
+                return True
+            else:
+                return False
+        return True
+    except Exception:
+        return False
+
+
+def is_syntax_valid2(code: str) -> bool:
+    try:
+        ast.parse(code)
+        return True
+    except Exception:
+        return False
+
+def parse_tests(tests: str):
+    return [test.strip() for test in tests.splitlines() if "assert" in test]
+
+def find_tests(prompt, functions):
+    for func in functions:
+        if func.prompt == prompt:
+            return [t.text for t in func.testcases if t.prediction_is_valid == 1]
+    return ['No Tests']
+
+def generate_testcases(dataset_choice, llm_name, extra_run):
     """
     :param dataset_choice: 0 for MBPP, 1 for HumanEval, 2 for LeetCode
     :param llm_name: Name of the LLM to use
@@ -169,34 +200,21 @@ def generate_testcases(dataset_choice, llm_name):
     else:
         print(f"LLM {llm_name} not supported.")
         return
-
-    def parse_tests(tests: str):
-        return [test.strip() for test in tests.splitlines() if "assert" in test]
-
-    def is_syntax_valid(code: str, func_name) -> bool:
-        try:
-            ast.parse(code)
-            if func_name is not None:
-                if func_name in code:
-                    return True
-                else:
-                    return False
-            return True
-        except Exception:
-            return False
-
-    def is_syntax_valid2(code: str) -> bool:
-        try:
-            ast.parse(code)
-            return True
-        except Exception:
-            return False
-
+    if extra_run:
+        print('second run...')
+        processed_file_name = f'filtered_testcases/BigCodeBenchHard_gpt-4o.pkl'
+        with open(processed_file_name, 'rb') as f:
+            functions: List[Function] = pickle.load(f)
     def process_gemini(text):
         added_text = "import unittest\ntestcase = unittest.TestCase()\n"
         return added_text + f'testcase.{text}'
     for idx, (prompt, solution) in tqdm(enumerate(list(dataset))):
-        content = instruction + few_shot + prompt
+        if extra_run:
+            tests = find_tests(prompt, functions)
+            content = PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench_second_run + "\nFunction description:\n" + prompt + '\nTests:\n\n' + "\n".join(
+                tests) + "\nExtra Tests:"
+        else:
+            content = instruction + few_shot + prompt
         # print(content)
         API_RESPONSE = llm_requester.get_completion(
             messages=[
@@ -256,14 +274,15 @@ def main():
 
     # Add LLM argument
     parser.add_argument('--llm', type=str, required=True, choices=VALID_LLMS, help=f'The LLM to use. Options are {VALID_LLMS}')
-
+    parser.add_argument('--extra_run', type=bool, required=False, default=False, help=f'If true, run in extra mode. Default is False.', choices=[True, False])
     # Parse arguments
     args = parser.parse_args()
 
     # Call the function with the provided dataset and LLM
     dataset = process_dataset(args.dataset)
     llm_name = args.llm
-    generate_testcases(dataset, llm_name)
+    extra_run = args.extra_run
+    generate_testcases(dataset, llm_name, extra_run)
 
 if __name__ == '__main__':
     main()

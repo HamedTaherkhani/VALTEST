@@ -26,6 +26,7 @@ from log_probs import LogProb, TestCase, get_all_tests, RawLogProbs, Function
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from sklearn.model_selection import GroupKFold, KFold
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score
+from mutation_testing_bigcode import perform_overall_mutation_testing_bigcodebench
 from sklearn.impute import SimpleImputer
 from test_coverage import measure_coverage
 from scikeras.wrappers import KerasClassifier
@@ -154,7 +155,7 @@ def extract_features(test_cases: List[TestCase], function_ids: List[int], strate
     features = []
     # print(approach)
     for test_case, func_id in zip(test_cases, function_ids):
-        if approach == 'semantic_entropy':
+        if approach in ('semantic_entropy', 'semantic_probability'):
         # Extract input features and add a prefix to each key
             input_features = {f'input_{k}': v for k, v in strategy.extract_features(test_case.input_logprobs).items()}
             # Extract output features and add a prefix to each key
@@ -370,11 +371,11 @@ def perform_mutation_testing(functions: List[Function], dataset):
     for f in functions:
         func_names = get_top_level_function_names(f.solution)
         if len(func_names) == 0:
-            # print(f.solution)
-            # print('here')
+            print(f.solution)
+            print('here')
             continue
         # functions_tests.append((f.solution, [ff.text for ff in f.testcases if ff.is_valid]))
-        functions_tests.append((func_names, f.solution, [ff.text for ff in f.testcases if ff.is_valid]))
+        functions_tests.append((func_names, f.solution, [ff.text for ff in f.testcases if ff.is_valid == 1]))
     all_tests = []
     for f in functions_tests:
         all_tests.extend(f[2])
@@ -397,7 +398,11 @@ def perform_mutation_testing(functions: List[Function], dataset):
     # print(f'Mutation scores per operator:{mutation_scores_per_operator}.3f')
 
     ## perform mutmut mutation testing
-    perform_overall_mutation_testing(functions_with_tests=functions_tests, dataset=dataset)
+    if 'BigCode' in dataset:
+        print('running BigCode mutation testing...')
+        perform_overall_mutation_testing_bigcodebench(functions_with_tests=functions_tests, dataset=dataset)
+    else:
+        perform_overall_mutation_testing(functions_with_tests=functions_tests, dataset=dataset)
 
 
 def downsample_tests(tests):
@@ -565,8 +570,10 @@ def main(dataset: str, llm: str, mutation:bool=False, threshold=0.8, topN=5, fea
             all_testcases.append(test_case)
             function_ids.append(func_id)
             test_case_ids.append((func_id, test_idx))  # Assign unique ID
-
-    strategy = StatisticalFeatureExtraction(use_entropy=True)
+    if approach == 'semantic_probability':
+        strategy = StatisticalFeatureExtraction(use_entropy=False)
+    else:
+        strategy = StatisticalFeatureExtraction(use_entropy=True)
     features = extract_features(all_testcases, function_ids, strategy, feature_sets, approach)
     print(features[0])
     # visualize_features(features)
@@ -698,7 +705,7 @@ if __name__ == "__main__":
         "--approach",
         type=str,
         default='semantic_entropy',
-        choices=['semantic_entropy', 'naive_entropy'],
+        choices=['semantic_entropy', 'naive_entropy', 'semantic_probability'],
         required=False,
     )
     args = parser.parse_args()

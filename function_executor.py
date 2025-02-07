@@ -130,7 +130,7 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
                 check=True,
                 cwd=temp_dir,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
                 preexec_fn=set_resource_limits,
                 timeout=300  # Wall-clock timeout in seconds
             )

@@ -183,11 +183,15 @@ def get_line_coverage_unittest(code_str, test_case_strings):
 
             # Execute the coverage run command
             try:
+                env = os.environ.copy()
+                env['MPLBACKEND'] = 'Agg'
                 subprocess.run(
                     'coverage run -m unittest discover',
                     preexec_fn=lambda: limit_resources(max_memory_mb),
                     timeout=120,
-                    cwd=temp_dir, shell=True, check=True
+                    cwd=temp_dir, shell=True, check=True,
+
+                    env=env,
                 )
             except subprocess.TimeoutExpired:
                 print(f"Test run timed out")

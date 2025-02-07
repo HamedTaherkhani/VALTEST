@@ -29,14 +29,9 @@ if __name__ == "__main__":
 
                 input_mean_valid = []
                 input_mean_invalid = []
-                second_input_mean_valid = []
-                second_input_mean_invalid = []
 
                 output_mean_valid = []
                 output_mean_invalid = []
-                second_output_mean_valid = []
-                second_output_mean_invalid = []
-
                 valid = 0
                 invalid = 0
                 ##extract features statistics on valid and invalid test cases
@@ -44,35 +39,23 @@ if __name__ == "__main__":
                     if i['is_valid']:
                         input_mean_valid.append(i['input_mean'])
                         output_mean_valid.append(i['output_mean'])
-                        second_input_mean_valid.append(i['second_input_mean'])
-                        second_output_mean_valid.append(i['second_output_mean'])
                         valid += 1
                     else:
                         input_mean_invalid.append(i['input_mean'])
                         output_mean_invalid.append(i['output_mean'])
-                        second_input_mean_invalid.append(i['second_input_mean'])
-                        second_output_mean_invalid.append(i['second_output_mean'])
                         invalid += 1
                 a_file.write(f'Features for {dataset} and {llm} for valid instances:\n')
-                a_file.write(f'input_mean average: {round(np.mean(input_mean_valid),1)}\n')
-                a_file.write(f'output_mean average: {round(np.mean(output_mean_valid),1)}\n')
-                a_file.write(f'second_input_mean average: {round(np.mean(second_input_mean_valid),1)}\n')
-                a_file.write(f'second_output_mean average: {round(np.mean(second_output_mean_valid),1)}\n')
+                a_file.write(f'input_mean average: {round(np.mean(input_mean_valid),3)}\n')
+                a_file.write(f'output_mean average: {round(np.mean(output_mean_valid),3)}\n')
 
                 a_file.write(f'Features for {dataset} and {llm} for invalid instances:\n')
-                a_file.write(f'input_mean average: {round(np.mean(input_mean_invalid),1)}\n')
-                a_file.write(f'output_mean average: {round(np.mean(output_mean_invalid),1)}\n')
-                a_file.write(f'second_input_mean average: {round(np.mean(second_input_mean_invalid),1)}\n')
-                a_file.write(f'second_output_mean average: {round(np.mean(second_output_mean_invalid),1)}\n')
+                a_file.write(f'input_mean average: {round(np.mean(input_mean_invalid),3)}\n')
+                a_file.write(f'output_mean average: {round(np.mean(output_mean_invalid),3)}\n')
 
                 statistic1, p_value1 = mannwhitneyu(input_mean_valid, input_mean_invalid, alternative='two-sided')
                 statistic2, p_value2 = mannwhitneyu(output_mean_valid, output_mean_invalid, alternative='two-sided')
-                statistic3, p_value3 = mannwhitneyu(second_input_mean_valid, second_input_mean_invalid, alternative='two-sided')
-                statistic4, p_value4 = mannwhitneyu(second_output_mean_valid, second_output_mean_invalid, alternative='two-sided')
 
                 a_file.write(f'mann whitney u test for input_mean: statistics: {statistic1} p-value:{p_value1}\n')
                 a_file.write(f'mann whitney u test for output_mean: statistics: {statistic2} p-value:{p_value2}\n')
-                a_file.write(f'mann whitney u test for second_input_mean: statistics: {statistic3} p-value:{p_value3}\n')
-                a_file.write(f'mann whitney u test for second_output_mean: statistics: {statistic4} p-value:{p_value4}\n')
                 a_file.write('--------------------------------------------------------------------------------\n')
 

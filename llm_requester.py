@@ -26,12 +26,12 @@ class OpenaiRequester(LLMRequester):
 
     def get_completion(self,
             messages: list[dict[str, str]],
-            max_tokens=1400,
+            max_tokens=2000,
             temperature=0,
             stop=None,
             seed=123,
             tools=None,
-            logprobs=None,
+            logprobs=True,
             # whether to return log probabilities of the output tokens or not. If true, returns the log probabilities of each output token returned in the content of message..
             top_logprobs=5 ## change this to generate top logprobs
     ) -> dict[str, str]:
