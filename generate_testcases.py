@@ -9,7 +9,7 @@ from typing import List
 from loaders.humaneval_loader import HumanEvalLoader
 from loaders.MBPPLoader import MBPPLoader
 from loaders.leetcode_loader import LeetCodeLoader
-from llm_requester import OpenaiRequester, HuggingfaceRequester, GeminiRequester, VertexAIRequester
+from llm_requester import OpenaiRequester, HuggingfaceRequester, GeminiRequester, VertexAIRequester, LLamaAPIRequester, AntropicRequester, FireworksAPIRequester
 from loaders.livecodebench_loader import LiveCodeBenchLoader
 from loaders.livecodebench_loader2 import LiveCodeBenchLoader2
 # from BigCodeLoader import BigCodeLoader
@@ -183,12 +183,21 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
 
     if llm_name == 'gpt-4':
         llm_requester = OpenaiRequester('gpt-4')
+    elif llm_name == 'o3-mini':
+        llm_requester = OpenaiRequester('o3-mini')
+    elif llm_name == 'deepseek':
+        # llm_requester = OpenaiRequester('deepseek-reasoner', backend="https://api.deepseek.com")
+        llm_requester = FireworksAPIRequester('deepseek-r1')
     elif llm_name == 'gpt-4o':
         llm_requester = OpenaiRequester('gpt-4o')
     elif llm_name == 'gpt-3.5-turbo':
         llm_requester = OpenaiRequester('gpt-3.5-turbo')
     elif llm_name == 'llama3':
         llm_requester = HuggingfaceRequester('meta-llama/Meta-Llama-3.1-8B-Instruct')
+    elif llm_name == 'codellama':
+        llm_requester = HuggingfaceRequester('codellama/CodeLlama-7b-Instruct-hf')
+    elif llm_name == 'codeqwen':
+        llm_requester = HuggingfaceRequester('Qwen/CodeQwen1.5-7B-Chat')
     elif llm_name == 'magiccoder':
         llm_requester = HuggingfaceRequester('ise-uiuc/Magicoder-S-DS-6.7B')
     elif llm_name == 'GeminiPro':
@@ -197,6 +206,8 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
         llm_requester = VertexAIRequester('gemini-1.5-flash-002')
     elif llm_name == 'mistral':
         llm_requester = HuggingfaceRequester('mistralai/Mistral-7B-Instruct-v0.3')
+    elif llm_name == 'claude-3-7-sonnet-20250219':
+        llm_requester = AntropicRequester('claude-3-7-sonnet-20250219')
     else:
         print(f"LLM {llm_name} not supported.")
         return
@@ -251,8 +262,8 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
         raw_probs.append(raw_prob)
     # print(raw_probs)
     os.makedirs('unfiltered_testcases', exist_ok=True)
-    with open(f'unfiltered_testcases/{dataset_name}_{llm_name}.pkl', 'wb') as f:
-        pickle.dump(raw_probs, f)
+    with open(f'epic_tests/{dataset_name}_{llm_name}.pkl', 'wb') as f:
+        pickle.dump(testcases, f)
 
 
 # Function that processes the dataset and returns its index

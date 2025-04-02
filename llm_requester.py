@@ -1,5 +1,9 @@
+import time
+import anthropic
 from openai import OpenAI
 import os
+import requests
+import json
 from dotenv import load_dotenv
 import torch.nn.functional as F
 load_dotenv()
@@ -11,22 +15,94 @@ from vertexai.generative_models._generative_models import ResponseValidationErro
 from vertexai.generative_models import GenerativeModel, ChatSession, GenerationConfig
 # Import necessary libraries for different LLMs
 from abc import ABC, abstractmethod
+from llamaapi import LlamaAPI
 import google.generativeai as genai
 class LLMRequester(ABC):
     @abstractmethod
     def get_completion(self, messages, **kwargs):
         pass
 
+class LLamaAPIRequester(LLMRequester):
+    def __init__(self, name):
+        self.key = os.getenv("llama_api_key")
+        self.client = LlamaAPI(self.key)
+        self.name = name
+    def get_completion(self, messages, **kwargs):
+        # prompt = ''.join([message['content'] for message in messages])
+
+        api_request_json = {
+            "model": self.name,
+            # "max_tokens": 2000,
+            'messages': messages,
+            "stream": False,
+        }
+        try:
+            response = self.client.run(api_request_json)
+            response = response.json()
+        except Exception as e:
+            print('here')
+            print(e)
+            return {
+                'text': ' ',
+                'logprobs': []
+            }
+        content = response['choices'][0]['message']['content']
+        print(content)
+        time.sleep(1)
+        return {
+            'text': content,
+            'logprobs': []
+        }
+
+
+class FireworksAPIRequester(LLMRequester):
+    def __init__(self, name):
+        self.name = name
+        self.key = os.getenv("fireworks_key")
+    def get_completion(self, messages, **kwargs):
+        prompt = ''.join([message['content'] for message in messages])
+        # print(prompt)
+        url = "https://api.fireworks.ai/inference/v1/chat/completions"
+        payload = {
+            "model": f"accounts/fireworks/models/{self.name}",
+            "max_tokens": 8000,
+            # "top_p": 1,
+            # "top_k": 40,
+            "presence_penalty": 0,
+            "frequency_penalty": 0,
+            "temperature": 0,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        }
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.key}"
+        }
+        res = requests.request("POST", url, headers=headers, data=json.dumps(payload))
+        # print(res.json()['choices'][0]['message']['content'])
+        return {
+            'text': res.json()['choices'][0]['message']['content'],
+            'logprobs': []
+        }
 
 class OpenaiRequester(LLMRequester):
-    def __init__(self, name):
+    def __init__(self, name, backend=None):
         self.key = os.getenv('openai_key')
-        self.client = OpenAI(api_key=self.key)
+        if backend is None:
+            self.client = OpenAI(api_key=self.key)
+        else:
+            self.key = os.getenv('deepseek_key')
+            self.client = OpenAI(api_key=self.key, base_url=backend)
         self.name = name
 
     def get_completion(self,
             messages: list[dict[str, str]],
-            max_tokens=2000,
+            max_tokens=4000,
             temperature=0,
             stop=None,
             seed=123,
@@ -45,8 +121,8 @@ class OpenaiRequester(LLMRequester):
             "logprobs": logprobs,
             "top_logprobs": top_logprobs,
         }
-        if tools:
-            params["tools"] = tools
+        # if tools:
+        #     params["tools"] = tools
 
         completion = self.client.chat.completions.create(**params)
         lps = completion.choices[0].logprobs.content
@@ -58,6 +134,7 @@ class OpenaiRequester(LLMRequester):
             'text': text,
             'logprobs': tokens_with_logprobs
         }
+    time.sleep(3)
 
 class VertexAIRequester(LLMRequester):
     def __init__(self, name):
@@ -86,6 +163,34 @@ class VertexAIRequester(LLMRequester):
             'logprobs': tokens_with_logprobs
         }
 
+class AntropicRequester(LLMRequester):
+    def __init__(self, name):
+        self.client = anthropic.Anthropic(api_key=os.getenv("anthropic_key"))
+        self.name = name
+    def get_completion(self, messages, **kwargs):
+        prompt = ''.join([message['content'] for message in messages])
+        response = self.client.messages.create(
+            model=self.name,
+            max_tokens=4000,
+            # temperature=1,
+            system="You are an expert python developer who writes good test cases.",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt
+                        }
+                    ]
+                }
+            ]
+        )
+        text = response.content[0].text
+        return {
+            'text': text,
+            'logprobs': []
+        }
 
 class GeminiRequester(LLMRequester):
     def __init__(self, candidates=1):
