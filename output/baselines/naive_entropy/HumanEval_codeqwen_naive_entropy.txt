@@ -1,0 +1,58 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/HumanEval_codeqwen_processed.pkl...
+161
+161
+{'feature_mean': 0.12210688368641154, 'feature_max': 1.6045097310458551, 'feature_min': 9.305915902084325e-06, 'feature_sum': 80.95686388409085, 'feature_total': 663, 'feature_variance': 0.06214007674023395, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 2703
+Balanced dataset size - Number of invalid testcases: 496
+Valid Testcase Ratio" 0.84
+calculating initial coverage of the functions and mutation score....
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 2169, number of negative: 390
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000262 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 759
+[LightGBM] [Info] Number of data points in the train set: 2559, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.847597 -> initscore=1.715875
+[LightGBM] [Info] Start training from score 1.715875
+[LightGBM] [Info] Number of positive: 2136, number of negative: 423
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000087 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 761
+[LightGBM] [Info] Number of data points in the train set: 2559, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.834701 -> initscore=1.619318
+[LightGBM] [Info] Start training from score 1.619318
+[LightGBM] [Info] Number of positive: 2180, number of negative: 379
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000078 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 739
+[LightGBM] [Info] Number of data points in the train set: 2559, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.851895 -> initscore=1.749544
+[LightGBM] [Info] Start training from score 1.749544
+[LightGBM] [Info] Number of positive: 2180, number of negative: 379
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000122 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 738
+[LightGBM] [Info] Number of data points in the train set: 2559, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.851895 -> initscore=1.749544
+[LightGBM] [Info] Start training from score 1.749544
+[LightGBM] [Info] Number of positive: 2147, number of negative: 413
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000066 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 737
+[LightGBM] [Info] Number of data points in the train set: 2560, number of used features: 6
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.838672 -> initscore=1.648379
+[LightGBM] [Info] Start training from score 1.648379
+Model: ensemble
+Threshold: 0.75
+=== Selection Statistics ===
+Total selected instances: 2978
+The ratio valid test cases: 0.858
+============================
+Calculating coverage and mutation score using filtered test cases...
+precision: 0.86
+recall: 0.95
+f1_score: 0.90
+{'ensemble': {'total_selected': 2978, 'valid_test_case_ration': 0.858}}
+Saving filtered functions to filtered_testcases/HumanEval_codeqwen.pkl...

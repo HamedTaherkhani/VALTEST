@@ -1,0 +1,90 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/LeetCode_codeqwen_processed.pkl...
+530
+526
+{'input_mean': 0.0011483859908228242, 'input_max': 0.003234128283886104, 'input_min': 5.0182179150892846e-05, 'input_sum': 0.0034451579724684724, 'input_total': 3, 'input_variance': 2.17720159242412e-06, 'output_mean': 1.0985241941334448e-05, 'output_max': 1.0985241941334448e-05, 'output_min': 1.0985241941334448e-05, 'output_sum': 1.0985241941334448e-05, 'output_total': 1, 'output_variance': 0.0, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 6014
+Balanced dataset size - Number of invalid testcases: 3051
+Valid Testcase Ratio" 0.66
+calculating initial coverage of the functions and mutation score....
+coverage: 0.98
+The total number of tests for mutation testing: 6014
+running mutation testing...
+Timeout expired for mutmut on module shortestDistance.
+Timeout expired for mutmut on module fib.
+Failed to parse mutmut results for module count_segments.
+Failed to parse mutmut results for module toLowerCase.
+Timeout expired for mutmut on module generateMatrix.
+Final Mutation Testing Results:
+Total mutants: 11030
+Killed mutants: 9265
+Survived mutants: 1484
+Timeout mutants: 269
+Suspicious mutants: 15
+Overall Mutation Score: 84.00%
+Initial coverage:
+0.98
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 4843, number of negative: 2409
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000161 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2664
+[LightGBM] [Info] Number of data points in the train set: 7252, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.667816 -> initscore=0.698323
+[LightGBM] [Info] Start training from score 0.698323
+[LightGBM] [Info] Number of positive: 4853, number of negative: 2399
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000161 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2680
+[LightGBM] [Info] Number of data points in the train set: 7252, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.669195 -> initscore=0.704545
+[LightGBM] [Info] Start training from score 0.704545
+[LightGBM] [Info] Number of positive: 4919, number of negative: 2333
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000177 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2680
+[LightGBM] [Info] Number of data points in the train set: 7252, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.678296 -> initscore=0.745950
+[LightGBM] [Info] Start training from score 0.745950
+[LightGBM] [Info] Number of positive: 4741, number of negative: 2511
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000164 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2681
+[LightGBM] [Info] Number of data points in the train set: 7252, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.653751 -> initscore=0.635567
+[LightGBM] [Info] Start training from score 0.635567
+[LightGBM] [Info] Number of positive: 4700, number of negative: 2552
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000180 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2680
+[LightGBM] [Info] Number of data points in the train set: 7252, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.648097 -> initscore=0.610685
+[LightGBM] [Info] Start training from score 0.610685
+Model: ensemble
+Threshold: 0.75
+=== Selection Statistics ===
+Total selected instances: 4643
+The ratio valid test cases: 0.907
+============================
+Calculating coverage and mutation score using filtered test cases...
+coverage: 0.978
+The total number of tests for mutation testing: 4210
+running mutation testing...
+Failed to parse mutmut results for module toLowerCase.
+Timeout expired for mutmut on module shortestDistance.
+Timeout expired for mutmut on module fib.
+Failed to parse mutmut results for module count_segments.
+Timeout expired for mutmut on module generateMatrix.
+Final Mutation Testing Results:
+Total mutants: 11030
+Killed mutants: 9061
+Survived mutants: 1706
+Timeout mutants: 263
+Suspicious mutants: 3
+Overall Mutation Score: 82.15%
+precision: 0.91
+recall: 0.70
+f1_score: 0.79
+{'ensemble': {'coverage': 0.978, 'total_selected': 4643, 'valid_test_case_ration': 0.907}}
+Saving filtered functions to filtered_testcases/LeetCode_codeqwen.pkl...

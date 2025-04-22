@@ -1,0 +1,126 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/LeetCode_gpt-3.5-turbo_processed.pkl...
+528
+526
+{'input_mean': 0.00114605774583209, 'input_max': 0.0034629768268715885, 'input_min': 4.274122953690821e-05, 'input_sum': 0.00573028872916045, 'input_total': 5, 'input_variance': 1.5103944523652584e-06, 'output_mean': 7.290217044388444e-05, 'output_max': 8.204241442475538e-05, 'output_min': 6.376192646301353e-05, 'output_sum': 0.0001458043408877689, 'output_total': 2, 'output_variance': 8.354406002984715e-11, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 5134
+Balanced dataset size - Number of invalid testcases: 3080
+Valid Testcase Ratio" 0.63
+calculating initial coverage of the functions and mutation score....
+coverage: 0.975
+The total number of tests for mutation testing: 5134
+running mutation testing...
+Failed to parse mutmut results for module toLowerCase.
+Timeout expired for mutmut on module minTransfers.
+Timeout expired for mutmut on module getMaxRepetitions.
+Timeout expired for mutmut on module findSubstringInWraproundString.
+Failed to parse mutmut results for module validateIP.
+Failed to parse mutmut results for module findRadius.
+Failed to parse mutmut results for module find_complement.
+Failed to parse mutmut results for module total_hamming_distance.
+Failed to parse mutmut results for module largestPalindrome.
+Timeout expired for mutmut on module generateMatrix.
+Timeout expired for mutmut on module getPermutation.
+Timeout expired for mutmut on module uniquePaths.
+Timeout expired for mutmut on module uniquePathsWithObstacles.
+Timeout expired for mutmut on module minPathSum.
+Timeout expired for mutmut on module plusOne.
+Timeout expired for mutmut on module addBinary.
+Timeout expired for mutmut on module mySqrt.
+Timeout expired for mutmut on module climbStairs.
+Timeout expired for mutmut on module simplifyPath.
+Timeout expired for mutmut on module shortestDistance.
+Failed to parse mutmut results for module fib.
+Failed to parse mutmut results for module find_rotate_steps.
+Failed to parse mutmut results for module longestPalindromeSubseq.
+Failed to parse mutmut results for module find_min_moves.
+Failed to parse mutmut results for module change.
+Failed to parse mutmut results for module find_lus_length.
+Failed to parse mutmut results for module findMaxLength.
+Failed to parse mutmut results for module countArrangement.
+Final Mutation Testing Results:
+Total mutants: 10324
+Killed mutants: 8575
+Survived mutants: 1382
+Timeout mutants: 336
+Suspicious mutants: 47
+Overall Mutation Score: 83.06%
+Initial coverage:
+0.975
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 4066, number of negative: 2505
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.076645 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 2621
+[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.618779 -> initscore=0.484371
+[LightGBM] [Info] Start training from score 0.484371
+[LightGBM] [Info] Number of positive: 4134, number of negative: 2437
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.079500 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 2627
+[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.629128 -> initscore=0.528478
+[LightGBM] [Info] Start training from score 0.528478
+[LightGBM] [Info] Number of positive: 4133, number of negative: 2438
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.070983 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2626
+[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.628976 -> initscore=0.527826
+[LightGBM] [Info] Start training from score 0.527826
+[LightGBM] [Info] Number of positive: 4145, number of negative: 2426
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.066938 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 2627
+[LightGBM] [Info] Number of data points in the train set: 6571, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.630802 -> initscore=0.535659
+[LightGBM] [Info] Start training from score 0.535659
+[LightGBM] [Info] Number of positive: 4058, number of negative: 2514
+[LightGBM] [Info] Auto-choosing row-wise multi-threading, the overhead of testing was 0.077879 seconds.
+You can set `force_row_wise=true` to remove the overhead.
+And if memory is not enough, you can set `force_col_wise=true`.
+[LightGBM] [Info] Total Bins 2630
+[LightGBM] [Info] Number of data points in the train set: 6572, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.617468 -> initscore=0.478815
+[LightGBM] [Info] Start training from score 0.478815
+Model: ensemble
+Threshold: 0.75
+=== Selection Statistics ===
+Total selected instances: 3430
+The ratio valid test cases: 0.895
+============================
+Calculating coverage and mutation score using filtered test cases...
+coverage: 0.973
+The total number of tests for mutation testing: 3071
+running mutation testing...
+Failed to parse mutmut results for module toLowerCase.
+Timeout expired for mutmut on module generateMatrix.
+Timeout expired for mutmut on module getPermutation.
+Timeout expired for mutmut on module minTransfers.
+Failed to parse mutmut results for module getMaxRepetitions.
+Failed to parse mutmut results for module findSubstringInWraproundString.
+Failed to parse mutmut results for module validateIP.
+Failed to parse mutmut results for module findRadius.
+Failed to parse mutmut results for module find_complement.
+Failed to parse mutmut results for module total_hamming_distance.
+Failed to parse mutmut results for module largestPalindrome.
+Failed to parse mutmut results for module count_segments.
+Timeout expired for mutmut on module shortestDistance.
+Timeout expired for mutmut on module fib.
+Final Mutation Testing Results:
+Total mutants: 10820
+Killed mutants: 8882
+Survived mutants: 1670
+Timeout mutants: 269
+Suspicious mutants: 4
+Overall Mutation Score: 82.09%
+precision: 0.90
+recall: 0.60
+f1_score: 0.72
+{'ensemble': {'coverage': 0.973, 'total_selected': 3430, 'valid_test_case_ration': 0.895}}
+Saving filtered functions to filtered_testcases/LeetCode_gpt-3.5-turbo.pkl...

@@ -1,0 +1,119 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/MBPP_codeqwen_processed.pkl...
+392
+391
+{'input_mean': 1.4994405221276443, 'input_max': 1.4994405221276443, 'input_min': 1.4994405221276443, 'input_sum': 1.4994405221276443, 'input_total': 1, 'input_variance': 0.0, 'output_mean': 1.638150827924222e-05, 'output_max': 1.638150827924222e-05, 'output_min': 1.638150827924222e-05, 'output_sum': 1.638150827924222e-05, 'output_total': 1, 'output_variance': 0.0, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 4693
+Balanced dataset size - Number of invalid testcases: 2317
+Valid Testcase Ratio" 0.67
+calculating initial coverage of the functions and mutation score....
+coverage: 0.87
+The total number of tests for mutation testing: 4693
+running mutation testing...
+Failed to parse mutmut results for module count_list.
+Failed to parse mutmut results for module merge.
+Failed to parse mutmut results for module sort_sublists.
+Failed to parse mutmut results for module unique_product.
+Failed to parse mutmut results for module surfacearea_cylinder.
+Failed to parse mutmut results for module is_Sub_Array.
+Failed to parse mutmut results for module last_Digit_Factorial.
+Failed to parse mutmut results for module interleave_lists.
+Failed to parse mutmut results for module find_dissimilar.
+Failed to parse mutmut results for module split_Arr.
+Failed to parse mutmut results for module list_tuple.
+Failed to parse mutmut results for module power_base_sum.
+Failed to parse mutmut results for module consecutive_duplicates.
+Failed to parse mutmut results for module right_insertion.
+Failed to parse mutmut results for module list_split.
+Failed to parse mutmut results for module pack_consecutive_duplicates.
+Failed to parse mutmut results for module split_two_parts.
+Failed to parse mutmut results for module max_sum_list.
+Failed to parse mutmut results for module sum_of_digits.
+Failed to parse mutmut results for module smallest_num.
+Failed to parse mutmut results for module is_lower.
+Failed to parse mutmut results for module Find_Min.
+Failed to parse mutmut results for module count.
+Failed to parse mutmut results for module is_upper.
+Final Mutation Testing Results:
+Total mutants: 2707
+Killed mutants: 2260
+Survived mutants: 404
+Timeout mutants: 42
+Suspicious mutants: 1
+Overall Mutation Score: 83.49%
+Initial coverage:
+0.87
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 3734, number of negative: 1874
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000193 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2642
+[LightGBM] [Info] Number of data points in the train set: 5608, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.665835 -> initscore=0.689405
+[LightGBM] [Info] Start training from score 0.689405
+[LightGBM] [Info] Number of positive: 3793, number of negative: 1815
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.031948 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2643
+[LightGBM] [Info] Number of data points in the train set: 5608, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.676355 -> initscore=0.737072
+[LightGBM] [Info] Start training from score 0.737072
+[LightGBM] [Info] Number of positive: 3744, number of negative: 1864
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000166 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2633
+[LightGBM] [Info] Number of data points in the train set: 5608, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.667618 -> initscore=0.697430
+[LightGBM] [Info] Start training from score 0.697430
+[LightGBM] [Info] Number of positive: 3742, number of negative: 1866
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.029848 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2635
+[LightGBM] [Info] Number of data points in the train set: 5608, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.667261 -> initscore=0.695823
+[LightGBM] [Info] Start training from score 0.695823
+[LightGBM] [Info] Number of positive: 3759, number of negative: 1849
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000160 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2636
+[LightGBM] [Info] Number of data points in the train set: 5608, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.670292 -> initscore=0.709508
+[LightGBM] [Info] Start training from score 0.709508
+Model: ensemble
+Threshold: 0.8
+=== Selection Statistics ===
+Total selected instances: 1892
+The ratio valid test cases: 0.822
+============================
+Calculating coverage and mutation score using filtered test cases...
+coverage: 0.829
+The total number of tests for mutation testing: 1555
+running mutation testing...
+Failed to parse mutmut results for module smallest_num.
+Failed to parse mutmut results for module split_two_parts.
+Failed to parse mutmut results for module right_insertion.
+Failed to parse mutmut results for module max_sum_list.
+Failed to parse mutmut results for module power_base_sum.
+Failed to parse mutmut results for module consecutive_duplicates.
+Failed to parse mutmut results for module count_list.
+Failed to parse mutmut results for module pack_consecutive_duplicates.
+Failed to parse mutmut results for module sum_of_digits.
+Failed to parse mutmut results for module count.
+Failed to parse mutmut results for module merge.
+Failed to parse mutmut results for module is_lower.
+Failed to parse mutmut results for module is_upper.
+Failed to parse mutmut results for module split.
+Failed to parse mutmut results for module Find_Min.
+Final Mutation Testing Results:
+Total mutants: 2691
+Killed mutants: 2082
+Survived mutants: 565
+Timeout mutants: 43
+Suspicious mutants: 1
+Overall Mutation Score: 77.37%
+precision: 0.82
+recall: 0.33
+f1_score: 0.47
+{'ensemble': {'coverage': 0.829, 'total_selected': 1892, 'valid_test_case_ration': 0.822}}
+Saving filtered functions to filtered_testcases/MBPP_codeqwen.pkl...
