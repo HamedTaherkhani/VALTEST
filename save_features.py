@@ -1,6 +1,7 @@
 from log_probs import get_all_tests
 from main_train import remove_unnecessary_functions, StatisticalFeatureExtraction, extract_features
-from datasets_and_llms import VALID_DATASETS, VALID_LLMS
+VALID_DATASETS = ['MBPP', 'HumanEval', 'LeetCode']
+VALID_LLMS = ['gpt-4o', 'gpt-3.5-turbo', 'llama3', 'codeqwen',]
 import numpy as np
 from scipy.stats import mannwhitneyu
 

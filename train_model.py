@@ -49,9 +49,10 @@ def train_llm_model(datasets: List[str], llm: str, model_name: str = 'ensemble',
 
     print("Training the model...")
     pipeline.fit(X, y)
-
+    dato = [item for item in ['MBPP', 'HumanEval', 'LeetCode'] if item not in datasets]
+    dato = dato[0]
     # Save the trained model
-    output_model_path: str = f'models/trained_model_{llm}.pkl'
+    output_model_path: str = f'models/trained_model_{llm}_{dato}.pkl'
     joblib.dump(pipeline, output_model_path)
     print(f"Model trained and saved to {output_model_path}")
 

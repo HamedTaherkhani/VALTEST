@@ -19,59 +19,31 @@ You are given a function implementation, function description and some test case
    - **Description**: The LLM-generated test case does not match the actual function logic or expected behavior. The function may involve complex logic, edge cases, or specific conditions that the LLM did not infer from the docstring.
    - **Example**: The test case expects the function to return a result in cases where the function should actually raise an error or handle the case differently.
 
-### 2. **Incorrect Parameter Types**
-   - **Description**: The LLM-generated test case provides incorrect types for function parameters, leading to type errors or incorrect outputs. This could happen if the docstring doesn't clearly specify types, or the LLM misinterprets them.
-   - **Example**: Passing a string where an integer is expected, or passing a list instead of a single value.
-
-### 3. **Incorrect Return Value Expectations**
-   - **Description**: The LLM expects a return value that doesn’t match the actual return type or structure of the function. This could happen if the function returns complex objects like lists, tuples, or dictionaries, but the LLM infers a different structure.
-   - **Example**: Expecting a single integer return, but the function returns a tuple or a dictionary.
-
-### 4. **Edge Case Misinterpretation**
+### 2. **Edge Case Misinterpretation**
    - **Description**: The test case fails because the LLM didn’t properly handle an edge case. The function implementation has specific behavior for unusual or extreme input values that the LLM did not infer.
    - **Example**: A test case that passes negative values to a function that is only designed to handle positive numbers.
 
-### 5. **Off-by-One or Range Errors**
+### 3. **Off-by-One or Range Errors**
    - **Description**: The test case expects results that are slightly off due to an off-by-one or range-related misunderstanding. These errors often occur when functions deal with sequences, loops, or boundaries.
    - **Example**: Expecting an index to start at 1 when it actually starts at 0, leading to incorrect test case outputs.
 
-### 6. **Incorrect Assumptions About Input-Output Mapping**
+### 4. **Incorrect Input-Output Mapping**
    - **Description**: The LLM may infer a simple mapping between input and output based on the docstring, but the actual function involves more complex transformations or checks that were not apparent.
    - **Example**: Assuming a function is a straightforward arithmetic operation when it’s actually performing data validation before processing the inputs.
 
-### 7. **Failure to Handle Exceptions**
-   - **Description**: The test case doesn’t account for exceptions that should be raised by the function. The function might raise specific exceptions based on certain inputs, but the LLM test cases do not check for or expect those exceptions. For example Division by Zero Error.
-   - **Example**: A function is designed to raise a `ValueError` when invalid inputs are passed, but the LLM generates test cases expecting a normal return value instead of handling the exception.
-
-### 8. **Incorrect Assumptions About Side Effects**
-   - **Description**: The LLM might assume that the function has or does not have side effects (e.g., modifying input objects, changing global state), leading to invalid test case expectations.
-   - **Example**: The function modifies a list in place, but the test case expects a new list to be returned, or vice versa.
-
-### 9. **Ignoring Required Pre-Conditions or Invariants**
-   - **Description**: Some functions may require certain pre-conditions (e.g., sorted inputs, non-empty lists) to work properly, which are not mentioned explicitly in the docstring. LLM-generated test cases may fail to account for these conditions.
-   - **Example**: Passing an unsorted list to a function that assumes the input is already sorted.
-
-### 10. **Ambiguities or Incompleteness in the Docstring**
+### 5. **Ambiguities or Incompleteness in the Docstring**
    - **Description**: If the docstring is ambiguous, incomplete, or lacks details, the LLM might generate test cases based on incorrect assumptions, leading to assertion errors when run on the function implementation.
    - **Example**: A docstring that doesn’t specify behavior for certain input ranges or edge cases, causing the LLM to make an incorrect guess.
 
-### 11. **Overfitting to Common Patterns**
-   - **Description**: The LLM may overfit to common coding patterns or generic cases, missing out on the specificities of the function at hand. It might generate test cases that are valid in a general sense but invalid for the specific function implementation.
-   - **Example**: Assuming a function works similarly to a well-known algorithm, but the function implementation uses a custom or less common approach.
-
-### 12. **Assuming Pure Functions When They Aren't**
-   - **Description**: The LLM may assume the function is pure (i.e., its output only depends on its inputs and has no side effects) when in reality, the function might involve state changes, I/O, or randomness.
-   - **Example**: A function that uses randomization or external data sources, but the LLM-generated test case assumes a deterministic output.
-
-### 13. **Rounding Expectations**
+### 6. **Rounding Expectations**
    - **Description**: The invalid test cases assume that the result should be rounded to the nearest integer or a specific decimal place, which is not explicitly handled in the function implementation.
 
 Please categorize each test case and map each test case to a number. put the results in between *****. Please review all categories and find the category which is the closest one.
 The final output should be something like this.:
 *****
-1. Ambiguities or Incompleteness in the Docstring (Category 10)
-2. Ambiguities or Incompleteness in the Docstring (Category 10)
-3. Ambiguities or Incompleteness in the Docstring (Category 10)
+1. Ambiguities or Incompleteness in the Docstring (Category 5)
+2. Ambiguities or Incompleteness in the Docstring (Category 5)
+3. Ambiguities or Incompleteness in the Docstring (Category 5)
 *****
 ---
 """
@@ -128,28 +100,15 @@ class Category:
 categories = [
     Category(1, "Misunderstanding of Function Logic",
              "The LLM-generated test case does not match the actual function logic or expected behavior."),
-    Category(2, "Incorrect Parameter Types",
-             "The LLM-generated test case provides incorrect types for function parameters."),
-    Category(3, "Incorrect Return Value Expectations",
-             "The LLM expects a return value that doesn’t match the actual return type or structure of the function."),
-    Category(4, "Edge Case Misinterpretation",
+    Category(2, "Edge Case Misinterpretation",
              "The test case fails because the LLM didn’t properly handle an edge case."),
-    Category(5, "Off-by-One or Range Errors",
+    Category(3, "Off-by-One or Range Errors",
              "The test case expects results that are slightly off due to an off-by-one or range-related misunderstanding."),
-    Category(6, "Incorrect Assumptions About Input-Output Mapping",
+    Category(4, "Incorrect Input-Output Mapping",
              "The LLM infers a simple input-output mapping but the function involves complex transformations."),
-    Category(7, "Failure to Handle Exceptions",
-             "The test case doesn’t account for exceptions that should be raised by the function."),
-    Category(8, "Incorrect Assumptions About Side Effects",
-             "The LLM assumes the function has or doesn’t have side effects."),
-    Category(9, "Ignoring Required Pre-Conditions or Invariants",
-             "The function requires certain pre-conditions that the LLM-generated test case fails to account for."),
-    Category(10, "Ambiguities or Incompleteness in the Docstring",
+    Category(5, "Ambiguities or Incompleteness in the Docstring",
              "Ambiguous or incomplete docstring causes LLM to make incorrect assumptions."),
-    Category(11, "Overfitting to Common Patterns", "The LLM may overfit to common coding patterns or generic cases."),
-    Category(12, "Assuming Pure Functions When They Aren't",
-             "The LLM assumes the function is pure when it has state changes, I/O, or randomness."),
-    Category(13, "Rounding Expectations",
+    Category(6, "Rounding Expectations",
              "The invalid test cases assume that the result should be rounded to the nearest integer or specific decimal place.")
 ]
 
@@ -249,7 +208,7 @@ def categorize_invalid_tests(functions: List['Function'], client, model="o1-prev
                 'test_case_text': gg.text,
                 'category_index': category.index,
                 'category_name': category.name,
-                'predicted': gg.prediction_is_valid
+                # 'predicted': gg.prediction_is_valid
             })
         return function_result
 
@@ -268,14 +227,29 @@ if __name__ == '__main__':
     from openai import OpenAI
     client = OpenAI(api_key=os.getenv('openai_key'))
     dataset = 'HumanEval'
-    llm = 'gpt-4o'
+    llm = 'GeminiPro'
     from typing import List
-    from log_probs import Function
+    from log_probs import Function, TestCase, RawLogProbs
     import pickle
-
-    with open(f'filtered_testcases/{dataset}_{llm}.pkl', 'rb') as f:
-        functions: List[Function] = pickle.load(f)
+    from function_executor import run_test_cases
+    with open(f'unfiltered_testcases/{dataset}_{llm}.pkl', 'rb') as f:
+        functions: List[RawLogProbs] = pickle.load(f)
     functions = functions
+    funcs: List[Function] = []
+    for idx,func in tqdm(enumerate(functions)):
+        # print(idx)
+        ## HE
+        if idx in (39,76):
+            continue
+        is_passed_list = run_test_cases(func.solution, func.testcases, timeout=5)
+        is_passed_list = [1 if gg else 0 for gg in is_passed_list]
+        tests:List[TestCase] =[]
+        # print(is_passed_list)
+        for index,item in enumerate(is_passed_list):
+            # print(item)
+            tests.append(TestCase(text=func.testcases[index],input_logprobs=[],output_logprobs=[],second_input_logprobs=[],second_output_logprobs=[],is_valid=is_passed_list[index]))
+        funcs.append(Function(solution=func.solution, testcases=tests, prompt=func.prompt))
+    functions = funcs
     # Ensure that 'functions' and 'prompt1' are defined before calling the function
     categorized_results = categorize_invalid_tests(functions, client)
     number_of_invalid_tests = 0
@@ -298,5 +272,5 @@ if __name__ == '__main__':
         print(f"  {category_name}: {count}")
 
     # Save the entire results into a pickle file
-    with open('output/categorized_results.pkl', 'wb') as f:
+    with open('output/categorized_results_gemini.pkl', 'wb') as f:
         pickle.dump(categorized_results, f)

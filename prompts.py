@@ -285,6 +285,7 @@ PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench = """
 You are an AI coding assistant that can write unique, diverse, and intuitive unit tests for functions given the signature and docstring. Do not make any comments on the test cases.
 Generate 10 to 20 unit test cases using python unittest. Write every unit test in a separate class based python unittest module. Write tests in class format. Put each unit test between separate 
 ```python and ``` tags. Make sure every testcase has setUp method and also another method that defines a test case. Write every object initialization or defining any variable in the setUp. Don't write more than 1 test function in each test case. Write 1 assertion in each test case.
+Assume the function is implemented in the current file and don't import anything the function from another file. If needed create files or directories in the setUp and remove them in tearDown method. Don't assume there are already any files or directories on system. Delete any created files or resources in tearDown method.
 """
 
 PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench_second_run = """

@@ -11,7 +11,7 @@ from log_probs import get_all_tests, RawLogProbs
 
 
 def evaluate_dataset_with_model(dataset: str, llm: str, mutation:False,
-                                threshold: float = 0.8, topN: int = 5,
+                                threshold: float = 0.75, topN: int = 3,
                                 feature_sets: str = 'all'):
     """
     Evaluate a dataset (with a specific LLM) using a pre-trained model.
@@ -33,7 +33,7 @@ def evaluate_dataset_with_model(dataset: str, llm: str, mutation:False,
         raise ValueError(f"Dataset {dataset} not in VALID_DATASETS: {VALID_DATASETS}")
     if llm not in VALID_LLMS:
         raise ValueError(f"LLM {llm} not in VALID_LLMS: {VALID_LLMS}")
-    model_path = f"models/trained_model_{llm}.pkl"
+    model_path = f"models/trained_model_{llm}_{dataset}.pkl"
     print(f"Loading model from {model_path}")
     model = joblib.load(model_path)
 
@@ -52,9 +52,9 @@ def evaluate_dataset_with_model(dataset: str, llm: str, mutation:False,
             test_case_ids.append((func_id, test_idx))
 
     print('calculating initial coverage of the functions and mutation score....')
-    coverage = evaluate_function(copy.deepcopy(functions), do_mutation=False, dataset=dataset)
-    print('Initial coverage:')
-    print(coverage)
+    # coverage = evaluate_function(copy.deepcopy(functions), do_mutation=False, dataset=dataset)
+    # print('Initial coverage:')
+    # print(coverage)
     models_performance = {}
 
     strategy = StatisticalFeatureExtraction()
@@ -184,15 +184,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--threshold",
         type=float,
-        default=0.8,
-        help=f"Specify the threshold for filtering out the test cases. Choices are: {0.5, 0.65, 0.7, 0.8, 0.85, 0.9}.",
-        choices=[0.5, 0.65, 0.7, 0.8, 0.85, 0.9],
+        default=0.75,
+        help=f"Specify the threshold for filtering out the test cases. Choices are: {0.5, 0.65, 0.75, 0.8, 0.85, 0.9}.",
+        choices=[0.5, 0.65, 0.75, 0.8, 0.85, 0.9],
         required=False
     )
     parser.add_argument(
         "--topN",
         type=int,
-        default=5,
+        default=3,
         choices=[1, 3, 5, 7],
         help=f"Specify the top N test cases. Choices are: {1, 3, 5, 7}.",
         required=False
