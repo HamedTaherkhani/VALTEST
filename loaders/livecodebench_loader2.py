@@ -5,7 +5,7 @@ class LiveCodeBenchLoader2:
         prompts = []
         solutions = []
         data = []
-        with open('../only_prompt_benchmarks/LCB.jsonl', 'r', encoding='utf-8') as file:
+        with open('/home/hamed/PycharmProjects/hallucination/only_prompt_benchmarks/LCB.jsonl', 'r', encoding='utf-8') as file:
             for line in file:
                 prompts.append(json.loads(line)['prompt'])
                 solutions.append('')

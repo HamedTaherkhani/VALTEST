@@ -1,5 +1,8 @@
+import os
+
 from datasets import load_dataset
 import re
+import json
 
 def find_import_statements(python_code: str) -> list:
     # Regular expressions to match both 'import' and 'from ... import ...' statements
@@ -11,7 +14,7 @@ def find_import_statements(python_code: str) -> list:
     from_imports = re.findall(from_import_pattern, python_code, re.MULTILINE)
 
     # Combine both types of imports into a single list
-    return imports + from_imports + ['import matplotlib as plt']
+    return imports + from_imports + ['import matplotlib as plt', 'import numpy as np', 'import pandas as pd']
 
 def extract_function_signature(code_string):
     # Regular expression to capture the function signature
@@ -31,7 +34,19 @@ class BigCodeLoader:
         if hard == 1:
             ds = load_dataset("bigcode/bigcodebench-hard", split="v0.1.2")
         else:
-            ds = load_dataset("bigcode/bigcodebench", split="v0.1.2")
+            data = []
+            with open(f'{os.getcwd()}/loaders/bigcodebench_subset.jsonl', 'r', encoding='utf-8') as file:
+                for line in file:
+                    data.append(json.loads(line.strip()))
+            ids = [item['name'] for item in data]
+            all_ds = load_dataset("bigcode/bigcodebench", split="v0.1.2")
+            ds = []
+            ids_ = []
+            for item in all_ds:
+                if item['task_id'] in ids:
+                    ds.append(item)
+                    ids_.append(item['task_id'])
+            self.ids = ids_
         self.prompts = []
         self.dataset = ds
         self.solutions = []
@@ -53,10 +68,11 @@ class BigCodeLoader:
             if len(imports) == 0:
                 print(item['complete_prompt'])
             # self.solutions.append('\n'.join(imports) + '\n' + extract_function_signature(item['complete_prompt'])+ ":\n" + item['canonical_solution'])
+            imports_text = '\n'.join(imports) + '\n'
             try:
-                sol = item['instruct_prompt'].split('```')[1] + item['canonical_solution']
+                sol = imports_text + item['instruct_prompt'].split('```')[1] + item['canonical_solution']
             except Exception as e:
-                sol = item['instruct_prompt'] + item['canonical_solution']
+                sol = imports_text + item['instruct_prompt'] + item['canonical_solution']
             self.solutions.append(sol)
     def get_prompts(self):
         return self.prompts
