@@ -151,7 +151,7 @@ def get_line_coverage_unittest(code_str, test_case_strings):
     # Generate a unique identifier for this test run to avoid module caching issues
     unique_id = uuid.uuid4().hex
     test_module_name = f'test_code_{unique_id}'
-
+    bigcode_venv_path = os.getcwd() + '/.bigcode_venv/bin'
     # Use TemporaryDirectory to ensure isolation
     with tempfile.TemporaryDirectory() as temp_dir:
         # temp_dir = '/home/hamed/PycharmProjects/hallucination/temp_dir2'
@@ -190,7 +190,8 @@ def get_line_coverage_unittest(code_str, test_case_strings):
                     preexec_fn=lambda: limit_resources(max_memory_mb),
                     timeout=120,
                     cwd=temp_dir, shell=True, check=True,
-
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                     env=env,
                 )
             except subprocess.TimeoutExpired:
@@ -204,7 +205,9 @@ def get_line_coverage_unittest(code_str, test_case_strings):
                 pass
             subprocess.run(
                 'python -m coverage json -o coverage.json',
-                cwd=temp_dir, shell=True
+                cwd=temp_dir, shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
 
             # Read the coverage.json file

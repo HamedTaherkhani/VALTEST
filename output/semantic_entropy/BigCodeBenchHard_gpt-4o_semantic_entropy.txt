@@ -1,0 +1,85 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/BigCodeBenchHard_gpt-4o_processed.pkl...
+147
+147
+{'input_mean': 0.013130569497733112, 'input_max': 0.19026667521521118, 'input_min': 8.327287129227419e-08, 'input_sum': 0.6302673358911893, 'input_total': 48, 'input_variance': 0.0014104759850872303, 'output_mean': 0.16180937782289379, 'output_max': 1.7375395344764306, 'output_min': 2.8469380005807555e-07, 'output_sum': 5.663328223801282, 'output_total': 35, 'output_variance': 0.14868938956606415, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 782
+Balanced dataset size - Number of invalid testcases: 468
+Valid Testcase Ratio" 0.63
+calculating initial coverage of the functions and mutation score....
+coverage: 83.251
+The total number of tests for mutation testing: 782
+running mutation testing...
+running BigCode mutation testing...
+Timeout expired for mutmut on module task_func.
+Final Mutation Testing Results:
+Total mutants: 1800
+Killed mutants: 990
+Survived mutants: 810
+Timeout mutants: 1
+Suspicious mutants: 0
+Overall Mutation Score: 55.00%
+Initial coverage:
+83.251
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 634, number of negative: 366
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000128 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2676
+[LightGBM] [Info] Number of data points in the train set: 1000, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.634000 -> initscore=0.549416
+[LightGBM] [Info] Start training from score 0.549416
+[LightGBM] [Info] Number of positive: 623, number of negative: 376
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000107 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2672
+[LightGBM] [Info] Number of data points in the train set: 999, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.623624 -> initscore=0.504957
+[LightGBM] [Info] Start training from score 0.504957
+[LightGBM] [Info] Number of positive: 624, number of negative: 376
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000105 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2676
+[LightGBM] [Info] Number of data points in the train set: 1000, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.624000 -> initscore=0.506561
+[LightGBM] [Info] Start training from score 0.506561
+[LightGBM] [Info] Number of positive: 613, number of negative: 387
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000122 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2674
+[LightGBM] [Info] Number of data points in the train set: 1000, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.613000 -> initscore=0.459940
+[LightGBM] [Info] Start training from score 0.459940
+[LightGBM] [Info] Number of positive: 634, number of negative: 367
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000099 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2675
+[LightGBM] [Info] Number of data points in the train set: 1001, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.633367 -> initscore=0.546687
+[LightGBM] [Info] Start training from score 0.546687
+Model: ensemble
+Threshold: 0.75
+=== Selection Statistics ===
+Total selected instances: 512
+The ratio valid test cases: 0.773
+============================
+Calculating coverage and mutation score using filtered test cases...
+coverage: 76.834
+The total number of tests for mutation testing: 396
+running mutation testing...
+running BigCode mutation testing...
+Timeout expired for mutmut on module task_func.
+Failed to parse mutmut results for module task_func.
+Final Mutation Testing Results:
+Total mutants: 2108
+Killed mutants: 991
+Survived mutants: 1117
+Timeout mutants: 1
+Suspicious mutants: 0
+Overall Mutation Score: 47.01%
+precision: 0.77
+recall: 0.51
+f1_score: 0.61
+{'ensemble': {'coverage': 76.834, 'total_selected': 512, 'valid_test_case_ration': 0.773}}
+Saving filtered functions to filtered_testcases/BigCodeBenchHard_gpt-4o.pkl...

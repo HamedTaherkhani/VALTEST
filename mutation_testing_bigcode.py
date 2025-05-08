@@ -88,7 +88,7 @@ def perform_overall_mutation_testing_bigcodebench(functions_with_tests, dataset,
             total=len(functions_with_tests),
             desc="Mutation Testing Chunks"
         ):
-            print(mutants, killed, survived, timeout, suspicious)
+            # print(mutants, killed, survived, timeout, suspicious)
             total_mutants += mutants
             total_killed += killed
             total_survived += survived

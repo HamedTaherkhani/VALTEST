@@ -2,7 +2,7 @@ import sys
 from typing import List
 import pickle
 import os
-from function_executor import run_test_cases, TimeoutException, run_unit_tests_parallel
+from function_executor import run_test_cases, TimeoutException, run_unit_tests_parallel, run_unit_tests_sequential
 import numpy as np
 from tqdm import tqdm
 import re
@@ -995,7 +995,10 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
                 prob=np.round(np.exp(ins[1]) * 100, 2),
                 entropy=calculate_shannon_entropy(probabilities=[np.exp(p[1]) for p in ins[2]])
             ))
-        test_list.append(testcases[textcase_index])
+        try:
+            test_list.append(testcases[textcase_index])
+        except IndexError:
+            break
         testcase_data_list.append({
             'text': testcases[textcase_index],
             'input_logprobs': input_logprobs,
@@ -1008,8 +1011,10 @@ def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_ty
     # print('-------------------------------------------------------------------')
     if test_type == 1:
         res = run_unit_tests_parallel(ground_truth, test_list)
+        # res = run_unit_tests_sequential(ground_truth, test_list)
+        # print(res)
         is_passed_list = [r[0] for r in res]
-        outputs = [r[1] for r in res]
+        outputs = [r[3] for r in res]
         for output in outputs:
             # print(output)
             # print('*'*100)
@@ -1123,11 +1128,12 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
             #     for t in testcases:
             #         print(t.text)
             #     print('*'*100)
-            # all_errors += errors
+            all_errors += errors
             # print(testcases)
         except Exception as e:
+            # raise e
             # print(e)
-            # print('Error processing test cases, skipping...')
+            print('Error processing test cases, skipping...')
             continue
 
         # Create Function object and append to the list

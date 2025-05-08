@@ -1,0 +1,58 @@
+Extracting testcases and running them...
+Loading processed functions from unfiltered_testcases/BigCodeBench_gpt-4o_processed.pkl...
+148
+148
+{'input_mean': 0.17932634024279895, 'input_max': 1.4194601476889457, 'input_min': 1.003409983147651e-08, 'input_sum': 8.786990671897149, 'input_total': 49, 'input_variance': 0.1382302551045384, 'output_mean': 0.0536997485056711, 'output_max': 0.7660753831361077, 'output_min': 4.2910630490456635e-08, 'output_sum': 0.9128957245964087, 'output_total': 17, 'output_variance': 0.03260090234234431, 'is_valid': 1, 'function_id': 0}
+Balanced dataset size - Number of valid testcases: 1025
+Balanced dataset size - Number of invalid testcases: 566
+Valid Testcase Ratio" 0.64
+calculating initial coverage of the functions and mutation score....
+
+Training and evaluating model: ensemble
+[LightGBM] [Info] Number of positive: 833, number of negative: 441
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000129 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2657
+[LightGBM] [Info] Number of data points in the train set: 1274, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.653846 -> initscore=0.635989
+[LightGBM] [Info] Start training from score 0.635989
+[LightGBM] [Info] Number of positive: 811, number of negative: 459
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000301 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2655
+[LightGBM] [Info] Number of data points in the train set: 1270, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.638583 -> initscore=0.569218
+[LightGBM] [Info] Start training from score 0.569218
+[LightGBM] [Info] Number of positive: 801, number of negative: 470
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000106 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2662
+[LightGBM] [Info] Number of data points in the train set: 1271, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.630212 -> initscore=0.533128
+[LightGBM] [Info] Start training from score 0.533128
+[LightGBM] [Info] Number of positive: 798, number of negative: 476
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000115 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2660
+[LightGBM] [Info] Number of data points in the train set: 1274, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.626374 -> initscore=0.516691
+[LightGBM] [Info] Start training from score 0.516691
+[LightGBM] [Info] Number of positive: 857, number of negative: 418
+[LightGBM] [Info] Auto-choosing col-wise multi-threading, the overhead of testing was 0.000125 seconds.
+You can set `force_col_wise=true` to remove the overhead.
+[LightGBM] [Info] Total Bins 2654
+[LightGBM] [Info] Number of data points in the train set: 1275, number of used features: 12
+[LightGBM] [Info] [binary:BoostFromScore]: pavg=0.672157 -> initscore=0.717956
+[LightGBM] [Info] Start training from score 0.717956
+Model: ensemble
+Threshold: 0.75
+=== Selection Statistics ===
+Total selected instances: 629
+The ratio valid test cases: 0.855
+============================
+Calculating coverage and mutation score using filtered test cases...
+precision: 0.86
+recall: 0.52
+f1_score: 0.65
+{'ensemble': {'total_selected': 629, 'valid_test_case_ration': 0.855}}
+Saving filtered functions to filtered_testcases/BigCodeBench_gpt-4o.pkl...

@@ -91,7 +91,7 @@ def run_testcase(func_str, timeout=5) -> int:
             return 0
 
 def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int, int, str]:
-    if 'import subprocess' in test_str:
+    if 'import subprocess' in code_str:
         return (False, 0, 1, 'subprocess')
     with tempfile.TemporaryDirectory() as temp_dir:
         # temp_dir = '/home/hamed/PycharmProjects/hallucination/temp_dir2/'
@@ -123,11 +123,13 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
                 sys.exit(1)
 
         try:
+            current_dir = os.getcwd()
+            bigcode_python_path = current_dir + '/.bigcode_venv/bin/python3'
             # Execute the tests using subprocess
             completed_process = subprocess.run(
-                'python -m unittest test.py',
+                f'{bigcode_python_path} -m unittest test.py',
                 shell=True,
-                check=True,
+                # check=True,
                 cwd=temp_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -135,6 +137,8 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
                 timeout=300  # Wall-clock timeout in seconds
             )
             output = completed_process.stdout.decode('utf-8')
+            output_stderr = completed_process.stderr.decode("utf-8")
+            # print(output_stderr)
             # print(output)
             # Print the captured output
             # print("Subprocess Output:")
@@ -142,10 +146,10 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
 
             # Parse the unittest output to determine pass/fail counts
             all_passed = completed_process.returncode == 0
-            passed, failed = parse_unittest_output(output)
+            passed, failed = parse_unittest_output(output_stderr)
             # print(passed, failed)
             # print('*'*100)
-            return (all_passed, passed, failed, output)
+            return (all_passed, passed, failed, output_stderr)
 
         except subprocess.TimeoutExpired:
             return (False, 0, 1, "Test execution timed out.")
@@ -210,7 +214,7 @@ def worker_wrapper_subprocess(test_str: str, code_str: str) -> Tuple[bool, str]:
         tuple: (all_passed, output) where `all_passed` is True if all tests passed.
     """
     all_passed, passed, failed, output = run_single_test_subprocess(code_str, test_str)
-    return all_passed, output
+    return all_passed, passed, failed, output
 
 def pool_worker_subprocess(arg_tuple):
     """
@@ -225,6 +229,13 @@ def pool_worker_subprocess(arg_tuple):
     test_str, code_str = arg_tuple
     return worker_wrapper_subprocess(test_str, code_str)
 
+
+def run_unit_tests_sequential(code_str: str, test_list: List[str]):
+    results = []
+    for test in test_list:
+        result = run_single_test_subprocess(code_str, test)
+        results.append(result)
+    return results
 
 def run_unit_tests_parallel(code_str: str, test_list: List[str]):
     """
@@ -252,8 +263,8 @@ def run_unit_tests_parallel(code_str: str, test_list: List[str]):
             pool.terminate()
             pool.join()
             # Assign failure to all pending tests
-            results = [(False, "Test execution timed out.") for _ in test_list]
+            results = [(False,0, 1, "Test execution timed out.") for _ in test_list]
         except BrokenPipeError:
             print('Broken pipe error')
-            return [(False, "Broken Pipe Error") for _ in test_list]
+            return [(False, 0, 1, "Broken Pipe Error") for _ in test_list]
     return results

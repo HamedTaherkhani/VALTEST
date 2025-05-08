@@ -197,7 +197,9 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
     elif llm_name == 'codellama':
         llm_requester = HuggingfaceRequester('codellama/CodeLlama-7b-Instruct-hf')
     elif llm_name == 'codeqwen':
-        llm_requester = HuggingfaceRequester('Qwen/CodeQwen1.5-7B-Chat')
+        llm_requester = FireworksAPIRequester('qwen2p5-coder-32b-instruct')
+    elif llm_name == 'codestral':
+        llm_requester = OpenaiRequester(name='mistralai/codestral-2501', backend="https://api.aimlapi.com/v1")
     elif llm_name == 'magiccoder':
         llm_requester = HuggingfaceRequester('ise-uiuc/Magicoder-S-DS-6.7B')
     elif llm_name == 'GeminiPro':
@@ -262,8 +264,8 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
         raw_probs.append(raw_prob)
     # print(raw_probs)
     os.makedirs('unfiltered_testcases', exist_ok=True)
-    with open(f'epic_tests/{dataset_name}_{llm_name}.pkl', 'wb') as f:
-        pickle.dump(testcases, f)
+    with open(f'unfiltered_testcases/{dataset_name}_{llm_name}.pkl', 'wb') as f:
+        pickle.dump(raw_probs, f)
 
 
 # Function that processes the dataset and returns its index

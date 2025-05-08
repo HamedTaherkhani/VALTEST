@@ -65,7 +65,8 @@ class FireworksAPIRequester(LLMRequester):
         url = "https://api.fireworks.ai/inference/v1/chat/completions"
         payload = {
             "model": f"accounts/fireworks/models/{self.name}",
-            "max_tokens": 8000,
+            "max_tokens": 2000,
+            "logprobs":5,
             # "top_p": 1,
             # "top_k": 40,
             "presence_penalty": 0,
@@ -84,11 +85,28 @@ class FireworksAPIRequester(LLMRequester):
             "Authorization": f"Bearer {self.key}"
         }
         res = requests.request("POST", url, headers=headers, data=json.dumps(payload))
-        # print(res.json()['choices'][0]['message']['content'])
-        return {
-            'text': res.json()['choices'][0]['message']['content'],
-            'logprobs': []
-        }
+        try:
+            res = res.json()
+            # print(res)
+            # print(res.keys())
+            # print(res['choices'][0])
+            # print(res['choices'][0].keys())
+            tokens_with_logprobs = []
+            for log in res['choices'][0]['logprobs']['top_logprobs']:
+                keys = list(log.keys())
+                # print(keys)
+                tokens_with_logprobs.append((keys[0], log[keys[0]], [(a,log[a]) for a in keys[1:]]))
+            # print(res.json()['choices'][0]['message']['content'])
+            return {
+                'text': res['choices'][0]['message']['content'],
+                'logprobs': tokens_with_logprobs
+            }
+        except requests.exceptions.JSONDecodeError:
+            return {
+                'text': ' ',
+                'logprobs': []
+            }
+
 
 class OpenaiRequester(LLMRequester):
     def __init__(self, name, backend=None):
@@ -96,7 +114,12 @@ class OpenaiRequester(LLMRequester):
         if backend is None:
             self.client = OpenAI(api_key=self.key)
         else:
-            self.key = os.getenv('deepseek_key')
+            if backend == "https://api.aimlapi.com/v1":
+                self.key = os.getenv('aimlapi_key')
+            elif backend == "https://api.deepinfra.com/v1/openai":
+                self.key = os.getenv('deepinfraapi_key')
+            else:
+                self.key = os.getenv('deepseek_key')
             self.client = OpenAI(api_key=self.key, base_url=backend)
         self.name = name
 
@@ -134,7 +157,7 @@ class OpenaiRequester(LLMRequester):
             'text': text,
             'logprobs': tokens_with_logprobs
         }
-    time.sleep(3)
+    # time.sleep(3)
 
 class VertexAIRequester(LLMRequester):
     def __init__(self, name):
