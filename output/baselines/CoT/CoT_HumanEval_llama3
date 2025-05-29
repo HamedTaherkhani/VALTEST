@@ -1,0 +1,3 @@
+✅ Correct Predictions (prediction_is_valid == 1 and is_valid == 1): 729
+❌ False Positives (prediction_is_valid == 1 and is_valid == 0): 314
+The ratio is 0.698
