@@ -38,8 +38,11 @@ def run_test_cases(func_code, test_cases, timeout=5): ## correct version
     """
     # Create a namespace dictionary for the function code
     func_namespace = {}
-    exec(func_code, func_namespace)
-
+    try:
+        exec(func_code, func_namespace)
+    except Exception as e:
+        pass
+        # print(func_code)
     def run_test_case(test_case_str):
         # Use a separate namespace for each test case to avoid side effects
         test_namespace = func_namespace.copy()
@@ -91,8 +94,8 @@ def run_testcase(func_str, timeout=5) -> int:
             return 0
 
 def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int, int, str]:
-    if 'import subprocess' in code_str:
-        return (False, 0, 1, 'subprocess')
+    # if 'import subprocess' in code_str:
+    #     return (False, 0, 1, 'subprocess')
     with tempfile.TemporaryDirectory() as temp_dir:
         # temp_dir = '/home/hamed/PycharmProjects/hallucination/temp_dir2/'
         code_path = os.path.join(temp_dir, 'code.py')
@@ -112,7 +115,7 @@ def run_single_test_subprocess(code_str: str, test_str: str) -> Tuple[bool, int,
         def set_resource_limits():
             try:
                 # Limit CPU time (e.g., 120 seconds)
-                cpu_time_limit = 240  # seconds
+                cpu_time_limit = 30  # seconds
                 resource.setrlimit(resource.RLIMIT_CPU, (cpu_time_limit, cpu_time_limit))
 
                 # Limit memory usage (e.g., 1 GB)
@@ -267,4 +270,6 @@ def run_unit_tests_parallel(code_str: str, test_list: List[str]):
         except BrokenPipeError:
             print('Broken pipe error')
             return [(False, 0, 1, "Broken Pipe Error") for _ in test_list]
+        except Exception as e:
+            return [(False, 0, 1, e.__str__()) for _ in test_list]
     return results

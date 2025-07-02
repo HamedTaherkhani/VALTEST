@@ -52,6 +52,7 @@ class BigCodeLoader:
         self.solutions = []
         self.libs = []
         self.all_imports = []
+        self.tests = []
         for item in ds:
             # if 'file' in item['complete_prompt']:
             #     continue
@@ -74,11 +75,12 @@ class BigCodeLoader:
             except Exception as e:
                 sol = imports_text + item['instruct_prompt'] + item['canonical_solution']
             self.solutions.append(sol)
+            self.tests.append(item['test'])
     def get_prompts(self):
         return self.prompts
 
-    # def get_tests(self):
-    #     return self.tests
+    def get_tests(self):
+        return self.tests
     #
     # def get_func_names(self):
     #     return self.func_names
