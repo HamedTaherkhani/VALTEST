@@ -184,4 +184,4 @@ class DualAgreement:
                 solution_str_set = [self.solution_id_to_string_by_task[task_id][solution] for solution in solution_set]
                 flatted_case_set_passed_solutions.append((solution_str_set, case_set_score*solution_set_score))
             ranked_solutions_by_task[task_id] = sorted(flatted_case_set_passed_solutions, key=lambda x: x[1], reverse=True)
-        return ranked_solutions_by_task
+        return ranked_solutions_by_task, self.data_manager.passed_solution_test_case_pairs_by_task

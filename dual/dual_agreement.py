@@ -208,11 +208,11 @@ def perform_dual_agreement(
     print(f'len dual result: {len(dual_exec_result)}')
     print(dual_exec_result[0])
     count_duel = 0
-    for aa in dual_exec_result:
-        for ii in aa['passed']:
-            if ii:
-                count_duel += 1
-    print(f'total correct dual result: {count_duel}')
+    # for aa in dual_exec_result:
+    #     for ii in aa['passed']:
+    #         if ii:
+    #             count_duel += 1
+    # print(f'total correct dual result: {count_duel}')
     # Tools.dump_pickle(os.path.join(args.cache_dir, 'ground_truth_exec_result.pkl'), ground_truth_exec_result)
     # Tools.dump_pickle(os.path.join(args.cache_dir, 'dual_exec_result.pkl'), dual_exec_result)
     print('*'*100)
@@ -222,8 +222,8 @@ def perform_dual_agreement(
     print('*'*100)
     data_manager = DataManager(dual_exec_result, handled_solutions, handled_test_cases, test_case_limit)
     set_consistency = DualAgreement(data_manager)
-    ranked_result = set_consistency.get_sorted_solutions_without_iter(use_valtest_scores=False)
-    compute_validity_rate(ranked_result, ground_truth_exec_result, functions, output_pickle_path,'other',is_unittest=is_unittest)
+    ranked_result,passed_solution_test_case_pairs_by_task = set_consistency.get_sorted_solutions_without_iter(use_valtest_scores=False)
+    compute_validity_rate(ranked_result, ground_truth_exec_result, functions, output_pickle_path,approach,is_unittest=is_unittest,passed_solution_test_case_pairs_by_task=passed_solution_test_case_pairs_by_task, valtest=valtest)
     # print(ranked_result)
     # logger.info('pass rates of ranked solutions')
     # get_result_of_sorted_solutions(ground_truth_exec_result, ranked_result)
@@ -310,7 +310,7 @@ if __name__ == "__main__":
         "--approach",
         type=str,
         default='dual_agreement',
-        choices=['dual_agreement', 'dual_agreement_valtest'],
+        choices=['dual_agreement', 'dual_agreement_valtest', 'dual_average_weights', 'one-shot'],
         required=False,
     )
     parser.add_argument(

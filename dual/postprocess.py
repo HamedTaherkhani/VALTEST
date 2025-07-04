@@ -84,7 +84,6 @@ class PostProcessor:
         #         test_cases_by_task[task['task_id']].append(test_cases)
 
         for idx, func in enumerate(functions):
-            print(idx)
             testcases = None
             for item in valtest:
                 if func.prompt == item.prompt:

@@ -10,6 +10,12 @@ import itertools
 from function_executor_codet import check_correctness_with_test_cases
 import pickle
 from function_executor import run_unit_tests_parallel, run_unit_tests_sequential
+import numpy as np
+import pandas as pd
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import precision_score, recall_score, f1_score, classification_report
+
 logging.basicConfig(
     format="SystemLog: [%(asctime)s][%(name)s][%(levelname)s] - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
@@ -114,8 +120,37 @@ def save_updated_functions(output_pickle_path, functions, tp, fp, tn, fn):
     print(f'recall is {recall}')
     print(f'f1 score is {2*(precision*recall)/(precision+recall)}')
 
+def find_scores(func, dual_res, valtest):
+    tests_scores = {}
+    actual_scores = {}
+    for idx,test in enumerate(valtest.testcases):
+        tests_scores[test.text] = test.prediction_y_prob
+        actual_scores[test.text] = test.is_valid
+    all_codes_len = len(set([r[0] for r in dual_res]))
+    print(f"all_codes_len: {all_codes_len}")
+    all_passed_tests = {}
+    if dual_res is not None:
+        for pair in dual_res:
+            if pair[1] in all_passed_tests.keys():
+                all_passed_tests[pair[1]] +=1
+            else:
+                all_passed_tests[pair[1]] = 1
 
-def compute_validity_rate(ranked_result, ground_truth_exec_result, functions, output_pickle_path, strategy, is_unittest):
+        for key,value in all_passed_tests.items():
+            all_passed_tests[key] = all_passed_tests[key] / all_codes_len
+        for key,value in tests_scores.items():
+            if key not in all_passed_tests.keys():
+                all_passed_tests[key] = 0
+    else:
+        all_passed_tests = tests_scores.copy()
+    if len(all_passed_tests.keys()) != len(tests_scores.keys()) or len(all_passed_tests.keys()) != len(actual_scores.keys()) or len(tests_scores.keys()) != len(actual_scores.keys()):
+        logger.info(all_passed_tests)
+        logger.info(tests_scores)
+        logger.info(actual_scores)
+    return all_passed_tests, tests_scores, actual_scores
+
+
+def compute_validity_rate(ranked_result, ground_truth_exec_result, functions, output_pickle_path, strategy, is_unittest,passed_solution_test_case_pairs_by_task, valtest):
     print(f'ranked_result len: {len(ranked_result)}')
     print(ranked_result['0'])
     print(f'functions len: {len(functions)}')
@@ -124,23 +159,87 @@ def compute_validity_rate(ranked_result, ground_truth_exec_result, functions, ou
     print(f'ground_truth_exec_result len: {len(ground_truth_exec_result)}')
     # print(ground_truth_exec_result['0'])
     tp = fp = tn = fn = 0
-    for idd,func in enumerate(functions):
-        if strategy == 'one-shot':
-            best_sol = func.generated_solutions[0]
-        else:
-            if f'{idd}' in ranked_result and ranked_result[f'{idd}']:
-                best_sol = ranked_result[f'{idd}'][0][0][0]
-                # print(idd)
-                # print(f'best_sol: \n{best_sol}')
+    if strategy in ('one-shot', 'dual'):
+        for idd,func in enumerate(functions):
+            if strategy == 'one-shot':
+                best_sol = func.generated_solutions[0]
+                tp_, fp_, tn_, fn_, func = compute_vr_func(func, best_sol, idd, is_unittest)
+            elif strategy == 'dual':
+                if f'{idd}' in ranked_result and ranked_result[f'{idd}']:
+                    best_sol = ranked_result[f'{idd}'][0][0][0]
+                    # print(idd)
+                    # print(f'best_sol: \n{best_sol}')
+                else:
+                    best_sol = list(ground_truth_exec_result[f'{idd}'].keys())[0]
+                    # print(f'best sol is \n{best_sol}')
+                tp_, fp_, tn_, fn_, func = compute_vr_func(func, best_sol, idd, is_unittest)
+            tp += tp_
+            fp += fp_
+            tn += tn_
+            fn += fn_
+        save_updated_functions(output_pickle_path, functions, tp, fp, tn, fn)
+    elif strategy == 'dual_average_weights':
+        all_dual_scores = {}
+        all_valtest_scores = {}
+        all_actual_scores = {}
+        for idd, func in enumerate(functions):
+            found = None
+            for val in valtest:
+                if val.prompt == func.prompt:
+                    found = val
+            if found is None:
+                logger.info(f'{func.prompt} is not in valtest')
+                logger.info(f'{idd} not found in valtest')
+                continue
+            if f'{idd}' in passed_solution_test_case_pairs_by_task.keys():
+                dual_res = passed_solution_test_case_pairs_by_task[f'{idd}']
             else:
-                best_sol = list(ground_truth_exec_result[f'{idd}'].keys())[0]
-                # print(f'best sol is \n{best_sol}')
-        tp_, fp_, tn_, fn_, func = compute_vr_func(func, best_sol, idd, is_unittest)
-        tp += tp_
-        fp += fp_
-        tn += tn_
-        fn += fn_
-    save_updated_functions(output_pickle_path, functions, tp, fp, tn, fn)
+                dual_res = None
+            dual_scores, valtest_scores, actual_scores = find_scores(func, dual_res, found)
+            all_dual_scores = {**all_dual_scores, **dual_scores}
+            all_valtest_scores = {**all_valtest_scores, **valtest_scores}
+            all_actual_scores = {**all_actual_scores, **actual_scores}
+        # Build DataFrame
+        logger.info(len(list(all_dual_scores.keys())))
+        logger.info(len(list(all_dual_scores.values())))
+        logger.info(len(list(all_valtest_scores.values())))
+        logger.info(len(list(all_actual_scores.values())))
+        df = pd.DataFrame({
+            "test": list(all_dual_scores.keys()),
+            "agreement": list(all_dual_scores.values()),
+            "token_prob": list(all_valtest_scores.values()),
+            "actual_validity": list(all_actual_scores.values())
+        })
+
+        # Features and labels
+        X = df[["agreement", "token_prob"]].values
+        y_true = df["actual_validity"].values
+
+        # 5-fold cross-validation: predict probabilities
+        model = GaussianNB()
+        cv_probs = cross_val_predict(model, X, y_true, cv=5, method="predict_proba")[:, 1]
+
+        # Threshold probabilities at 0.5 to get predicted labels
+        y_pred = (cv_probs >= 0.5).astype(int)
+
+        # Add predictions to DataFrame
+        df["valid_prob_cv"] = cv_probs
+        df["predicted_validity"] = y_pred
+
+        # Compute metrics
+        precision = precision_score(y_true, y_pred)
+        recall = recall_score(y_true, y_pred)
+        f1 = f1_score(y_true, y_pred)
+
+        # Print results
+        print(df[["test", "agreement", "token_prob", "valid_prob_cv", "actual_validity", "predicted_validity"]])
+        print("\nPrecision:", precision)
+        print("Recall:", recall)
+        print("F1 Score:", f1)
+        # print("\nClassification Report:\n", classification_report(y_true, y_pred))
+    else:
+        raise ValueError('Strategy not recognized')
+
 
 
 def get_result_of_sorted_solutions(ground_truth_results_list, sorted_solutions_by_task, topks=[1,2,10]):
