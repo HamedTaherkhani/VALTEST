@@ -47,7 +47,7 @@ Invalid test cases are identified and corrected through a chain-of-thought reaso
 ### SetUp
 ```bash
 ### To run bigcodebench evaluation you will need this
-python -m venv .bigcode_venv 
+python3.10 -m venv .bigcode_venv 
 source .bigcode_venv/bin/activate
 pip install -r requirements_bigcode.txt
 deactivate
