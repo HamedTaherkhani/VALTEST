@@ -44,15 +44,36 @@ Invalid test cases are identified and corrected through a chain-of-thought reaso
 
 ## Running the Project
 
-### Dependencies
-Ensure that all required libraries are installed by running:
-
+### SetUp
 ```bash
+### To run bigcodebench evaluation you will need this
+python -m venv .bigcode_venv 
+source .bigcode_venv/bin/activate
+pip install -r requirements_bigcode.txt
+deactivate
+###
+### To run the project
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
+###
+
+```
+Create a file named `.env`:
+
+Get OpenAI key (for GPT models): https://platform.openai.com/
+
+Get Fireworks key (for Qwen models): https://fireworks.ai/
+
+```dotenv
+openai_key=<your OpenAI key>
+fireworks_key=<your fileworks key> 
 ```
 
-### Generating Test Cases
+
+### Optional: Re-Generating Test Cases
 Please make a .env file in project root. For OpenAI's experiments, you need to set `openai_key` in the `.env` file. For CodeQwen, set `fireworks_key` in .env file. Find the key in `https://fireworks.ai/`. For LLama3, we use huggingface. The model needs ~25 GB Vram.
+The generated tests are stored in `unfiltered_testcases` folder in `<dataset>-<llm_name>.pkl` format. Use the existing generated tests or remove the tests and generate your own.
 
 
 To generate test cases from an LLM, use the `generate_testcases.py` script:
@@ -71,7 +92,8 @@ To train a model and predict the validity of test cases, use the `main_train.py`
 ```bash
 python main_train.py --dataset HumanEval --llm gpt-4o --mutation 0 --threshold 0.8 --topN 5 --features all
 ```
-
+This will output the results in `output` folder in `<dataset>-<llm_name>.txt` format.
+The output pickle file is stored in `filtered_testcases` folder in `<dataset>-<llm_name>.pkl` format.
 ### Parameters for `main_train.py`
 
 The `main_train.py` script accepts several parameters to customize the execution of the test case validation process. Below is a description of each parameter and its use:
