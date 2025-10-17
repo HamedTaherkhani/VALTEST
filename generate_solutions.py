@@ -10,7 +10,7 @@ from loaders.humaneval_loader import HumanEvalLoader
 from loaders.MBPPLoader import MBPPLoader
 from loaders.leetcode_loader import LeetCodeLoader
 from log_probs import Function
-from llm_requester import OpenaiRequester, HuggingfaceRequester, GeminiRequester, VertexAIRequester, LLamaAPIRequester, AntropicRequester, FireworksAPIRequester
+from llm_requester import OpenaiRequester, HuggingfaceRequester, GeminiRequester, LLamaAPIRequester, AntropicRequester, FireworksAPIRequester
 from loaders.livecodebench_loader import LiveCodeBenchLoader
 from loaders.livecodebench_loader2 import LiveCodeBenchLoader2
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
