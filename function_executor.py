@@ -24,45 +24,58 @@ def target(func_str):
     except Exception as e:
         raise e
 
-def run_test_cases(func_code, test_cases, timeout=5): ## correct version
+import multiprocessing
+
+def run_test_cases(func_code, test_cases, timeout=5):
     """
     Runs test cases concurrently on the provided function code.
 
     Args:
         func_code (str): The function code as a string.
         test_cases (list): A list of assertion statements as strings.
+        timeout (int): Timeout in seconds for each test case.
 
     Returns:
         list: A list of booleans indicating if each test case passed (True) or failed (False).
-        :param timeout:
     """
-    # Create a namespace dictionary for the function code
-    func_namespace = {}
-    try:
-        exec(func_code, func_namespace)
-    except Exception as e:
-        pass
-        # print(func_code)
-    def run_test_case(test_case_str):
-        # Use a separate namespace for each test case to avoid side effects
+    def run_test_case(func_code, test_case_str, output_queue):
+        # Create a namespace dictionary for the function code
+        func_namespace = {}
+        try:
+            exec(func_code, func_namespace)
+        except Exception as e:
+            output_queue.put(False)
+            return
+
         test_namespace = func_namespace.copy()
         try:
-            # Execute the test case in the combined namespace
             exec(test_case_str, test_namespace)
-            return True
+            output_queue.put(True)
         except AssertionError:
-            return False
-        except Exception as e:
-            # print(f"Exception in test case '{test_case_str}': {e}")
-            return False
+            output_queue.put(False)
+        except Exception:
+            output_queue.put(False)
 
-    # Run test cases concurrently
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        try:
-            futures = [executor.submit(run_test_case, test_case) for test_case in test_cases]
-            results = [future.result(timeout=timeout) for future in futures]
-        except TimeoutError as e:
-            results = []
+    results = []
+    for test_case in test_cases:
+        output_queue = multiprocessing.Queue()
+        process = multiprocessing.Process(
+            target=run_test_case,
+            args=(func_code, test_case, output_queue)
+        )
+        process.start()
+        process.join(timeout)
+
+        if process.is_alive():
+            process.terminate()
+            process.join()
+            results.append(False)  # Timeout counts as failure
+        else:
+            try:
+                result = output_queue.get_nowait()
+                results.append(result)
+            except Exception:
+                results.append(False)
     return results
 
 
@@ -260,7 +273,7 @@ def run_unit_tests_parallel(code_str: str, test_list: List[str]):
         results = pool.map_async(pool_worker_subprocess, args)
         try:
             # Set a reasonable timeout for all tests to complete
-            results = results.get(timeout=300)  # e.g., 5 minutes
+            results = results.get(timeout=40)  # e.g., 5 minutes
         except multiprocessing.TimeoutError:
             print("Timeout while waiting for worker processes to finish.")
             pool.terminate()

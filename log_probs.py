@@ -44,7 +44,7 @@ class ErrorTypes:
         return ''
 
 class RawLogProbs:
-    def __init__(self, prompt: str, logprobs: dict, dataset: str, id: str, testcases: List[str], solution: str, test_type: int):
+    def __init__(self, prompt: str, logprobs: list, dataset: str, id: str, testcases: List[str], solution: str, test_type: int):
         self.prompt = prompt
         self.logprobs = logprobs
         self.dataset = dataset
@@ -57,7 +57,7 @@ class RawLogProbs:
         return (
             f"RawLogProbs(\n"
             f"  Prompt: {self.prompt}\n"
-            f"  logprobs: {[s[0] for s in self.logprobs]}\n"
+            f"  logprobs: {[s for s in self.logprobs]}\n"
             f"  Dataset: {self.dataset}\n"
             f"  ID: {self.id}\n"
             f"  Testcases: {self.testcases}\n"
@@ -931,7 +931,7 @@ def calculate_shannon_entropy(
     return entropy
 
 
-def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_type=0, dataset='HumanEval') -> (List[TestCase], Dict):
+def get_logprobs_dynamic(logprobs, testcases, method_name, ground_truth, test_type=0, dataset='HumanEval', task_id=None) -> (List[TestCase], Dict):
     if test_type == 1: ## python unittests
         sep_tests = []
         ## MEthod 1
@@ -1114,6 +1114,7 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
     all_errors = ErrorTypes()
     print(f'the dataset length is {len(raw_probs)}')
     for idx,prob in tqdm(enumerate(raw_probs)):
+        # print(idx)
         try:
             if len(prob.testcases) == 0:
                 continue
@@ -1122,13 +1123,14 @@ def get_all_tests(dataset: str, llm: str) -> List[Function]:
             except AttributeError:
                 test_type = 0
             testcases, errors = get_logprobs_dynamic(prob.logprobs, prob.testcases, prob.prompt,
-                                                               prob.solution, test_type,dataset)
+                                                               prob.solution, test_type,dataset, prob.id)
+            # print('jejejeje')
             # if errors.import_errors !=0 :
             #     print(prob.solution)
             #     for t in testcases:
             #         print(t.text)
             #     print('*'*100)
-            all_errors += errors
+            # all_errors += errors
             # print(testcases)
         except Exception as e:
             # raise e

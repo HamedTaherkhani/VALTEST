@@ -1,2 +1,2 @@
-VALID_DATASETS = ['MBPP', 'HumanEval', 'LeetCode', "LiveCodeBench", 'LiveCodeBench2', 'BigCodeBenchHard', 'BigCodeBench']
+VALID_DATASETS = ['MBPP', 'HumanEval', 'LeetCode', "LiveCodeBench", 'LiveCodeBench2', 'BigCodeBenchHard', 'BigCodeBench', 'TestEval']
 VALID_LLMS = ['gpt-4o', 'gpt-3.5-turbo', 'llama3', 'GeminiPro', "gemini-1.5-flash-002", 'deepseek', 'o3-mini', 'claude-3-7-sonnet-20250219', 'codeqwen', 'codellama']

@@ -9,15 +9,16 @@ from typing import List
 from loaders.humaneval_loader import HumanEvalLoader
 from loaders.MBPPLoader import MBPPLoader
 from loaders.leetcode_loader import LeetCodeLoader
-from llm_requester import OpenaiRequester, HuggingfaceRequester, GeminiRequester, VertexAIRequester, LLamaAPIRequester, AntropicRequester, FireworksAPIRequester
+from llm_requester import OpenaiRequester, HuggingfaceRequester, GeminiRequester, LLamaAPIRequester, AntropicRequester, FireworksAPIRequester
 from loaders.livecodebench_loader import LiveCodeBenchLoader
 from loaders.livecodebench_loader2 import LiveCodeBenchLoader2
+from loaders.testeval_loader import TestEvalLoader
 # from BigCodeLoader import BigCodeLoader
 from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from loaders.BigCodeLoader import BigCodeLoader
 from log_probs import RawLogProbs ,Function, TestCase, LogProb
 from prompts import PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, \
-    PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench, PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench_second_run
+    PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench, PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench_second_run, PY_TEST_GENERATION_FEW_SHOT_DLBench
 # Define an abstract base class for LLM requesters
 
 
@@ -47,6 +48,15 @@ def get_function_name(func_str):
     else:
         return None
 
+def get_first_function_name(code: str) -> str | None:
+    try:
+        tree = ast.parse(code)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                return node.name
+        return None
+    except SyntaxError:
+        return None
 
 def separate_python_code_blocks(text: str) -> List[str]:
     """
@@ -156,6 +166,13 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
         dataset = zip(prompts, solutions)
         dataset_name = 'BigCodeBench'
         test_type = 1
+    elif dataset_choice == 7:
+        evalloader = TestEvalLoader()
+        prompts = evalloader.get_prompts()
+        print(len(prompts))
+        solutions = evalloader.get_sols()
+        dataset = zip(prompts, solutions)
+        dataset_name = 'TestEval'
     # elif dataset_choice == 3:
     #     ds = DS1000Loader()
     #     prompts = ds.get_prompts()
@@ -174,7 +191,7 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
     else:
         print('Not a valid dataset selected.')
         return
-
+    # dataset = dataset[:10]
     from tqdm import tqdm
     import pickle
     testcases = []
@@ -198,6 +215,10 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
         llm_requester = HuggingfaceRequester('codellama/CodeLlama-7b-Instruct-hf')
     elif llm_name == 'codeqwen':
         llm_requester = FireworksAPIRequester('qwen2p5-coder-32b-instruct')
+    elif llm_name == 'qwen3':
+        llm_requester = FireworksAPIRequester('qwen3-30b-a3b')
+    elif llm_name == 'llama4':
+        llm_requester = FireworksAPIRequester('llama4-maverick-instruct-basic')
     elif llm_name == 'codestral':
         llm_requester = OpenaiRequester(name='mistralai/codestral-2501', backend="https://api.aimlapi.com/v1")
     elif llm_name == 'magiccoder':
@@ -205,7 +226,7 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
     elif llm_name == 'GeminiPro':
         llm_requester = GeminiRequester()
     elif llm_name == 'gemini-1.5-flash-002':
-        llm_requester = VertexAIRequester('gemini-1.5-flash-002')
+        pass
     elif llm_name == 'mistral':
         llm_requester = HuggingfaceRequester('mistralai/Mistral-7B-Instruct-v0.3')
     elif llm_name == 'claude-3-7-sonnet-20250219':
@@ -237,7 +258,8 @@ def generate_testcases(dataset_choice, llm_name, extra_run):
                 }
             ],
             logprobs=True,
-            temperature=0
+            temperature=0,
+            n=1
         )
         # print(API_RESPONSE)
         # print('-------------------------------------------')

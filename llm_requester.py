@@ -10,13 +10,13 @@ load_dotenv()
 # from swebench import generate_test_cases_for_swebench
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import torch
-import vertexai
-from vertexai.generative_models._generative_models import ResponseValidationError
-from vertexai.generative_models import GenerativeModel, ChatSession, GenerationConfig
+# import vertexai
+# from vertexai.generative_models._generative_models import ResponseValidationError
+# from vertexai.generative_models import GenerativeModel, ChatSession, GenerationConfig
 # Import necessary libraries for different LLMs
 from abc import ABC, abstractmethod
 from llamaapi import LlamaAPI
-import google.generativeai as genai
+# import google.generativeai as genai
 class LLMRequester(ABC):
     @abstractmethod
     def get_completion(self, messages, **kwargs):
@@ -65,19 +65,20 @@ class FireworksAPIRequester(LLMRequester):
         url = "https://api.fireworks.ai/inference/v1/chat/completions"
         payload = {
             "model": f"accounts/fireworks/models/{self.name}",
-            "max_tokens": 2000,
+            # "max_tokens": 10000,
             "logprobs":5,
             # "top_p": 1,
             # "top_k": 40,
             "presence_penalty": 0,
             "frequency_penalty": 0,
-            "temperature": 0,
+            "temperature": kwargs["temperature"],
             "messages": [
                 {
                     "role": "user",
                     "content": prompt
                 }
-            ]
+            ],
+            "n":kwargs['n'],
         }
         headers = {
             "Accept": "application/json",
@@ -85,6 +86,11 @@ class FireworksAPIRequester(LLMRequester):
             "Authorization": f"Bearer {self.key}"
         }
         res = requests.request("POST", url, headers=headers, data=json.dumps(payload))
+        if kwargs['n'] != 1:
+            res = res.json()
+            return {
+                'text': [res['message']['content'] for res in res['choices']]
+            }
         try:
             res = res.json()
             # print(res)
@@ -102,6 +108,7 @@ class FireworksAPIRequester(LLMRequester):
                 'logprobs': tokens_with_logprobs
             }
         except requests.exceptions.JSONDecodeError:
+            print('here')
             return {
                 'text': ' ',
                 'logprobs': []
@@ -132,59 +139,41 @@ class OpenaiRequester(LLMRequester):
             tools=None,
             logprobs=True,
             # whether to return log probabilities of the output tokens or not. If true, returns the log probabilities of each output token returned in the content of message..
-            top_logprobs=5 ## change this to generate top logprobs
+            top_logprobs=5,
+            n=1,
     ) -> dict[str, str]:
         params = {
             "model": self.name,
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature,
-            "stop": stop,
+            # "stop": stop,
             "seed": seed,
             "logprobs": logprobs,
-            "top_logprobs": top_logprobs,
+            # "top_logprobs": top_logprobs,
+            "n": n
         }
+        if logprobs:
+            params['top_logprobs'] = top_logprobs
         # if tools:
         #     params["tools"] = tools
 
         completion = self.client.chat.completions.create(**params)
-        lps = completion.choices[0].logprobs.content
-        text = completion.choices[0].message.content
-        tokens_with_logprobs = []
-        for lp in lps:
-            tokens_with_logprobs.append((lp.token, lp.logprob, [(l.token,l.logprob) for l in lp.top_logprobs]))
-        return {
-            'text': text,
-            'logprobs': tokens_with_logprobs
-        }
-    # time.sleep(3)
-
-class VertexAIRequester(LLMRequester):
-    def __init__(self, name):
-        PROJECT_ID = os.getenv('GCP_PROJECT')
-        GCP_LOCATION = os.getenv('GCP_LOCATION')
-        vertexai.init(project=PROJECT_ID, location=GCP_LOCATION)
-        self.config = GenerationConfig(logprobs=2, response_logprobs=True, temperature=0, max_output_tokens=1500)
-        model = GenerativeModel(name)
-        self.chat_session = model.start_chat()
-
-    def get_completion(self, messages, **kwargs):
-        prompt = ''.join([message['content'] for message in messages])
-        try:
-            responses = self.chat_session.send_message(prompt, stream=False, generation_config=self.config)
-        except ResponseValidationError:
+        if logprobs:
+            lps = completion.choices[0].logprobs.content
+            text = completion.choices[0].message.content
+            tokens_with_logprobs = []
+            for lp in lps:
+                tokens_with_logprobs.append((lp.token, lp.logprob, [(l.token,l.logprob) for l in lp.top_logprobs]))
             return {
-                'text': ' ',
-                'logprobs': [],
+                'text': text,
+                'logprobs': tokens_with_logprobs
             }
-        res = responses.candidates[0].content.parts[0].text
-        tokens_with_logprobs = []
-        for lgp in responses.candidates[0].logprobs_result.top_candidates:
-            tokens_with_logprobs.append((lgp.candidates[0].token, lgp.candidates[0].log_probability, [(l.token, l.log_probability) for l in lgp.candidates[1:]]))
-        return {
-            'text': res,
-            'logprobs': tokens_with_logprobs
-        }
+        else:
+            return {
+                'text': [choice.message.content for choice in completion.choices]
+            }
+    # time.sleep(3)
 
 class AntropicRequester(LLMRequester):
     def __init__(self, name):
