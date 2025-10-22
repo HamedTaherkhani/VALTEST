@@ -18,7 +18,7 @@ from datasets_and_llms import VALID_DATASETS, VALID_LLMS
 from loaders.BigCodeLoader import BigCodeLoader
 from log_probs import RawLogProbs ,Function, TestCase, LogProb
 from prompts import PY_TEST_GENERATION_FEW_SHOT, PY_TEST_GENERATION_CHAT_INSTRUCTION, \
-    PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench, PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench_second_run, PY_TEST_GENERATION_FEW_SHOT_DLBench
+    PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench, PY_TEST_GENERATION_FEW_SHOT_BigCodeBench, PY_TEST_GENERATION_CHAT_INSTRUCTION_BigCodeBench_second_run
 # Define an abstract base class for LLM requesters
 
 

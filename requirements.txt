@@ -14,7 +14,6 @@ torch
 bitsandbytes
 accelerate
 coverage
-google-generativeai
 autopep8
 astor
 pandas
@@ -25,7 +24,7 @@ lmfit
 mutmut
 pytest
 junit-xml==1.9
-google-generativeai
 vertexai==1.71.1
 anthropic
 llamaapi
+google-genai==1.24.0
